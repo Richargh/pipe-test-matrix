@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Wrapper script for running gitlab-test-matrix via Gradle
+# Forwards all arguments to ./gradlew run
+
+set -e
+
+# Forward all arguments to Gradle run task
+exec ./gradlew run --args="$*" --quiet --console=plain

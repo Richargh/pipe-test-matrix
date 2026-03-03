@@ -1,0 +1,50 @@
+[versions]
+kotlin = "2.3.0"
+ksp = "2.3.4"
+picocli = "4.7.5"
+jackson = "2.17.1"
+junit = "5.10.2"
+java = "21"
+kotest = "6.0.7"
+okhttp = "4.12.0"
+moshi = "1.15.2"
+kotlinx-serialization = "1.8.0"
+kotlinx-datetime = "0.6.1"
+kotlinx-coroutines = "1.10.2"
+ktor = "3.1.1"
+testBalloon = "0.8.0-Beta2"
+archunit = "1.4.1"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+application = { id = "application" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+testBalloon = { id = "de.infix.testBalloon", version.ref = "testBalloon" }
+
+[libraries]
+picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jackson" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp" }
+kotest-assertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
+moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" } 
+moshi-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+testBalloon-framework-core = { module = "de.infix.testBalloon:testBalloon-framework-core", version.ref = "testBalloon" }
+testBalloon-integration-kotest-assertions = { module = "de.infix.testBalloon:testBalloon-integration-kotest-assertions", version.ref = "testBalloon" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktor" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+archunit = { module = "com.tngtech.archunit:archunit-junit5", version.ref = "archunit" }
