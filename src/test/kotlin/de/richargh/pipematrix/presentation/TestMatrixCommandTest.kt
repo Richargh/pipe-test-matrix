@@ -1,4 +1,4 @@
-package de.richargh.pipematrix.cli
+package de.richargh.pipematrix.presentation
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain

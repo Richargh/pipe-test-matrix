@@ -2,7 +2,7 @@ package de.richargh.pipematrix
 
 import com.gitlab.api.GitLabApiException
 import com.gitlab.api.GitLabClient
-import de.richargh.pipematrix.cli.TestMatrixCommand
+import de.richargh.pipematrix.presentation.TestMatrixCommand
 import de.richargh.pipematrix.config.Config.Companion.fromEnvironment
 import de.richargh.pipematrix.domain.BranchName
 import de.richargh.pipematrix.domain.FailureThreshold
@@ -52,7 +52,7 @@ fun main(args: Array<String>) {
 /**
  * Runs the main application logic.
  */
-private fun runApplication(command: de.richargh.pipematrix.cli.TestMatrixCommand) {
+private fun runApplication(command: TestMatrixCommand) {
     runBlocking {
     try {
         // Load configuration from environment

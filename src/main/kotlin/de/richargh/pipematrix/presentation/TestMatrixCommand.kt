@@ -1,13 +1,11 @@
-package de.richargh.pipematrix.cli
+package de.richargh.pipematrix.presentation
 
-import picocli.CommandLine.Command
-import picocli.CommandLine.Option
-import picocli.CommandLine.Parameters
+import picocli.CommandLine
 
 /**
  * CLI command for displaying GitLab CI test failure matrix.
  */
-@Command(
+@CommandLine.Command(
     name = "gitlab-test-matrix",
     mixinStandardHelpOptions = true,
     version = ["1.0.0"]
@@ -16,7 +14,7 @@ class TestMatrixCommand : Runnable {
     /**
      * The GitLab project path (e.g., "mygroup/myproject").
      */
-    @Parameters(
+    @CommandLine.Parameters(
         index = "0",
         description = ["GitLab project path (e.g., 'mygroup/myproject')"],
         paramLabel = "PROJECT_PATH"
@@ -26,7 +24,7 @@ class TestMatrixCommand : Runnable {
     /**
      * The GitLab instance URL.
      */
-    @Option(
+    @CommandLine.Option(
         names = ["-u", "--url"],
         description = ["GitLab instance URL (e.g., 'https://gitlab.com')"],
         required = true
@@ -36,7 +34,7 @@ class TestMatrixCommand : Runnable {
     /**
      * The GitLab access token.
      */
-    @Option(
+    @CommandLine.Option(
         names = ["-t", "--token"],
         description = ["GitLab access token"],
         required = true
@@ -46,7 +44,7 @@ class TestMatrixCommand : Runnable {
     /**
      * The branch name to fetch pipelines for.
      */
-    @Option(
+    @CommandLine.Option(
         names = ["-b", "--branch"],
         description = ["Branch name to analyze (default: 'main')"],
         defaultValue = "main"
@@ -56,7 +54,7 @@ class TestMatrixCommand : Runnable {
     /**
      * The number of recent pipelines to analyze.
      */
-    @Option(
+    @CommandLine.Option(
         names = ["-c", "--count"],
         description = ["Number of recent pipelines to analyze (default: 10)"],
         defaultValue = "10"
@@ -66,7 +64,7 @@ class TestMatrixCommand : Runnable {
     /**
      * Debug mode - prints raw test case data to help identify available fields.
      */
-    @Option(
+    @CommandLine.Option(
         names = ["--debug-test-names"],
         description = ["Print raw test case data from first failed pipeline to identify field structure"]
     )
@@ -75,7 +73,7 @@ class TestMatrixCommand : Runnable {
     /**
      * Sort mode for test results.
      */
-    @Option(
+    @CommandLine.Option(
         names = ["-s", "--sort"],
         description = ["Sort mode: 'name' (alphabetically descending) or 'count' (by failure count descending, default)"],
         defaultValue = "count"
@@ -85,7 +83,7 @@ class TestMatrixCommand : Runnable {
     /**
      * Header display mode for the test matrix table.
      */
-    @Option(
+    @CommandLine.Option(
         names = ["--headers"],
         description = ["Header display mode: 'full' (all header info, default), 'none' (no headers)"],
         defaultValue = "full"
