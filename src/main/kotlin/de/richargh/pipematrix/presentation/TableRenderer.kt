@@ -16,11 +16,13 @@ object TableRenderer {
      *
      * @param matrix The test matrix to render
      * @param sortMode The sort mode to apply to the classname groups
+     * @param headerMode The header display mode (full, min, or none)
      * @return A formatted string representation of the matrix
      */
     fun render(
         matrix: de.richargh.pipematrix.domain.TestMatrix,
-        sortMode: de.richargh.pipematrix.domain.SortMode = de.richargh.pipematrix.domain.SortMode.COUNT
+        sortMode: de.richargh.pipematrix.domain.SortMode = de.richargh.pipematrix.domain.SortMode.COUNT,
+        headerMode: de.richargh.pipematrix.domain.HeaderMode = de.richargh.pipematrix.domain.HeaderMode.FULL
     ): String {
         // Handle empty matrix
         if (matrix.classnameGroups.isEmpty()) {
@@ -37,54 +39,62 @@ object TableRenderer {
                 paddingRight = 1
             }
 
-            // Header row with pipeline information
-            row {
-                cell("Test Class / Variant") {
-                    rowSpan = 5
-                    alignment = TextAlignment.MiddleLeft
-                }
+            // Render headers based on mode
+            when (headerMode) {
+                de.richargh.pipematrix.domain.HeaderMode.FULL -> {
+                    // Header row with pipeline information
+                    row {
+                        cell("Test Class / Variant") {
+                            rowSpan = 5
+                            alignment = TextAlignment.MiddleLeft
+                        }
 
-                // Add column for each pipeline
-                for (pipeline in matrix.pipelines) {
-                    cell(formatPipelineHeader(pipeline, matrix)) {
-                        alignment = TextAlignment.MiddleCenter
+                        // Add column for each pipeline
+                        for (pipeline in matrix.pipelines) {
+                            cell(formatPipelineHeader(pipeline, matrix)) {
+                                alignment = TextAlignment.MiddleCenter
+                            }
+                        }
+                    }
+
+                    // Second header row with short SHA
+                    row {
+                        for (pipeline in matrix.pipelines) {
+                            cell(pipeline.sha.shortSha()) {
+                                alignment = TextAlignment.MiddleCenter
+                            }
+                        }
+                    }
+
+                    // Third header row with status
+                    row {
+                        for (pipeline in matrix.pipelines) {
+                            cell(formatStatus(pipeline)) {
+                                alignment = TextAlignment.MiddleCenter
+                            }
+                        }
+                    }
+
+                    // Fourth header row with timestamp
+                    row {
+                        for (pipeline in matrix.pipelines) {
+                            cell(formatTimestamp(pipeline)) {
+                                alignment = TextAlignment.MiddleCenter
+                            }
+                        }
+                    }
+
+                    // Fifth header row with author
+                    row {
+                        for (pipeline in matrix.pipelines) {
+                            cell(formatAuthor(pipeline)) {
+                                alignment = TextAlignment.MiddleCenter
+                            }
+                        }
                     }
                 }
-            }
-
-            // Second header row with short SHA
-            row {
-                for (pipeline in matrix.pipelines) {
-                    cell(pipeline.sha.shortSha()) {
-                        alignment = TextAlignment.MiddleCenter
-                    }
-                }
-            }
-
-            // Third header row with status
-            row {
-                for (pipeline in matrix.pipelines) {
-                    cell(formatStatus(pipeline)) {
-                        alignment = TextAlignment.MiddleCenter
-                    }
-                }
-            }
-
-            // Fourth header row with timestamp
-            row {
-                for (pipeline in matrix.pipelines) {
-                    cell(formatTimestamp(pipeline)) {
-                        alignment = TextAlignment.MiddleCenter
-                    }
-                }
-            }
-
-            // Fifth header row with author
-            row {
-                for (pipeline in matrix.pipelines) {
-                    cell(formatAuthor(pipeline)) {
-                        alignment = TextAlignment.MiddleCenter
-                    }
+                de.richargh.pipematrix.domain.HeaderMode.NONE -> {
+                    // No headers at all
                 }
             }
 

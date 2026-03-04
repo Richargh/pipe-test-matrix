@@ -6,6 +6,7 @@ import de.richargh.pipematrix.cli.TestMatrixCommand
 import de.richargh.pipematrix.config.Config.Companion.fromEnvironment
 import de.richargh.pipematrix.domain.BranchName
 import de.richargh.pipematrix.domain.FailureThreshold
+import de.richargh.pipematrix.domain.HeaderMode
 import de.richargh.pipematrix.domain.ProjectPath
 import de.richargh.pipematrix.presentation.TableRenderer
 import de.richargh.pipematrix.repository.TestMatrixRepository
@@ -120,8 +121,18 @@ private fun runApplication(command: de.richargh.pipematrix.cli.TestMatrixCommand
                 }
             }
 
+            // Parse header mode
+            val headerMode = when (command.headerMode.lowercase()) {
+                "full" -> HeaderMode.FULL
+                "none" -> HeaderMode.NONE
+                else -> {
+                    System.err.println("Warning: Invalid header mode '${command.headerMode}'. Using 'full' as default.")
+                    HeaderMode.FULL
+                }
+            }
+
             // Render and display table
-            val table = TableRenderer.render(matrix, sortMode)
+            val table = TableRenderer.render(matrix, sortMode, headerMode)
             println(table)
 
             // Display summary

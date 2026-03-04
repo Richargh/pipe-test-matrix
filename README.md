@@ -80,6 +80,18 @@ gitlab-test-matrix mygroup/myproject --count 20
 gitlab-test-matrix mygroup/myproject --branch main --count 15
 ```
 
+### Control Header Display
+
+You can control how table headers are displayed using the `--headers` flag:
+
+```bash
+# Full headers with all information (default)
+gitlab-test-matrix mygroup/myproject --headers full
+
+# No headers at all
+gitlab-test-matrix mygroup/myproject --headers none
+```
+
 ### Help
 
 ```bash

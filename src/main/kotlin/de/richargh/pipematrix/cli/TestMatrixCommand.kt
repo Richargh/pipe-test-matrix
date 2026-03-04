@@ -82,6 +82,16 @@ class TestMatrixCommand : Runnable {
     )
     var sortMode: String = "count"
 
+    /**
+     * Header display mode for the test matrix table.
+     */
+    @Option(
+        names = ["--headers"],
+        description = ["Header display mode: 'full' (all header info, default), 'none' (no headers)"],
+        defaultValue = "full"
+    )
+    var headerMode: String = "full"
+
     override fun run() {
         // The actual execution logic will be in main()
         // This is just for parsing and validation

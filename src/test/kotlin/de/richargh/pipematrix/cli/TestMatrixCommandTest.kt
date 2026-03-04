@@ -156,4 +156,28 @@ class TestMatrixCommandTest {
         exitCode shouldBe 0
         command.projectPath shouldBe "my-group/my_project"
     }
+
+    @Test
+    fun `should parse headers flag with full value`() {
+        val (command, exitCode) = parseCommand("mygroup/myproject --url https://gitlab.com --token glpat-xxx --headers full")
+
+        exitCode shouldBe 0
+        command.headerMode shouldBe "full"
+    }
+
+    @Test
+    fun `should parse headers flag with none value`() {
+        val (command, exitCode) = parseCommand("mygroup/myproject --url https://gitlab.com --token glpat-xxx --headers none")
+
+        exitCode shouldBe 0
+        command.headerMode shouldBe "none"
+    }
+
+    @Test
+    fun `should default to full header mode when not specified`() {
+        val (command, exitCode) = parseCommand("mygroup/myproject --url https://gitlab.com --token glpat-xxx")
+
+        exitCode shouldBe 0
+        command.headerMode shouldBe "full"
+    }
 }

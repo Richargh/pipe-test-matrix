@@ -127,3 +127,22 @@ class FailureThresholdTest {
         }
     }
 }
+
+class HeaderModeTest {
+    @Test
+    fun `should have FULL mode`() {
+        val mode = HeaderMode.FULL
+        mode shouldBe HeaderMode.FULL
+    }
+
+    @Test
+    fun `should have NONE mode`() {
+        val mode = HeaderMode.NONE
+        mode shouldBe HeaderMode.NONE
+    }
+
+    @Test
+    fun `should have exactly two modes`() {
+        HeaderMode.entries.size shouldBe 2
+    }
+}

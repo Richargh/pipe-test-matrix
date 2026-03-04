@@ -93,3 +93,13 @@ value class AuthorName(val value: String) {
         }
     }
 }
+
+/**
+ * Represents the display mode for table headers.
+ */
+enum class HeaderMode {
+    /** Display full headers with all information (pipeline ID, SHA, status, timestamp, author) */
+    FULL,
+    /** Display no headers at all */
+    NONE
+}
