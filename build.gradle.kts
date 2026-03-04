@@ -37,6 +37,7 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.ktor:ktor-client-mock:2.3.7")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("com.tngtech.archunit:archunit-junit5:1.2.1")
 }
 
 application {
