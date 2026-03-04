@@ -1,1 +1,1 @@
-rootProject.name = "gitlab-ci-test-matrix"
+rootProject.name = "pipe-test-matrix"
