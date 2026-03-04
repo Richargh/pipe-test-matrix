@@ -2,6 +2,12 @@ package de.richargh.pipematrix.presentation
 
 import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
+import de.richargh.pipematrix.app.exposed.ClassnameGroup
+import de.richargh.pipematrix.app.exposed.HeaderMode
+import de.richargh.pipematrix.app.exposed.Pipeline
+import de.richargh.pipematrix.app.exposed.PipelineStatus
+import de.richargh.pipematrix.app.exposed.SortMode
+import de.richargh.pipematrix.app.exposed.TestMatrix
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -20,9 +26,9 @@ object TableRenderer {
      * @return A formatted string representation of the matrix
      */
     fun render(
-        matrix: de.richargh.pipematrix.domain.TestMatrix,
-        sortMode: de.richargh.pipematrix.domain.SortMode = de.richargh.pipematrix.domain.SortMode.COUNT,
-        headerMode: de.richargh.pipematrix.domain.HeaderMode = de.richargh.pipematrix.domain.HeaderMode.FULL
+        matrix: TestMatrix,
+        sortMode: SortMode = SortMode.COUNT,
+        headerMode: HeaderMode = HeaderMode.FULL
     ): String {
         // Handle empty matrix
         if (matrix.classnameGroups.isEmpty()) {
@@ -41,7 +47,7 @@ object TableRenderer {
 
             // Render headers based on mode
             when (headerMode) {
-                de.richargh.pipematrix.domain.HeaderMode.FULL -> {
+                HeaderMode.FULL -> {
                     // Header row with pipeline information
                     row {
                         cell("Test Class / Variant") {
@@ -93,7 +99,7 @@ object TableRenderer {
                         }
                     }
                 }
-                de.richargh.pipematrix.domain.HeaderMode.NONE -> {
+                HeaderMode.NONE -> {
                     // No headers at all
                 }
             }
@@ -121,7 +127,7 @@ object TableRenderer {
     /**
      * Formats a classname group with all its failure variants.
      */
-    private fun formatClassnameGroup(group: de.richargh.pipematrix.domain.ClassnameGroup): String {
+    private fun formatClassnameGroup(group: ClassnameGroup): String {
         val lines = mutableListOf<String>()
 
         // Add simple classname as header with total count (just the part after the last dot)
@@ -166,8 +172,8 @@ object TableRenderer {
      * For overloaded pipelines, shows indication.
      */
     private fun formatPipelineHeader(
-        pipeline: de.richargh.pipematrix.domain.Pipeline,
-        matrix: de.richargh.pipematrix.domain.TestMatrix
+        pipeline: Pipeline,
+        matrix: TestMatrix
     ): String {
         val id = "#${pipeline.id.value}"
         val isOverloaded = matrix.isOverloaded(pipeline.id)
@@ -183,21 +189,21 @@ object TableRenderer {
     /**
      * Formats the pipeline status.
      */
-    private fun formatStatus(pipeline: de.richargh.pipematrix.domain.Pipeline): String {
+    private fun formatStatus(pipeline: Pipeline): String {
         return when (pipeline.status) {
-            de.richargh.pipematrix.domain.PipelineStatus.SUCCESS -> "success"
-            de.richargh.pipematrix.domain.PipelineStatus.FAILED -> "failed"
-            de.richargh.pipematrix.domain.PipelineStatus.RUNNING -> "running"
-            de.richargh.pipematrix.domain.PipelineStatus.PENDING -> "pending"
-            de.richargh.pipematrix.domain.PipelineStatus.CANCELED -> "canceled"
-            de.richargh.pipematrix.domain.PipelineStatus.SKIPPED -> "skipped"
+            PipelineStatus.SUCCESS -> "success"
+            PipelineStatus.FAILED -> "failed"
+            PipelineStatus.RUNNING -> "running"
+            PipelineStatus.PENDING -> "pending"
+            PipelineStatus.CANCELED -> "canceled"
+            PipelineStatus.SKIPPED -> "skipped"
         }
     }
 
     /**
      * Formats the pipeline timestamp using locale-specific format.
      */
-    private fun formatTimestamp(pipeline: de.richargh.pipematrix.domain.Pipeline): String {
+    private fun formatTimestamp(pipeline: Pipeline): String {
         val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT)
             .withZone(ZoneId.systemDefault())
         return formatter.format(pipeline.createdAt)
@@ -206,7 +212,7 @@ object TableRenderer {
     /**
      * Formats the author name (shortened).
      */
-    private fun formatAuthor(pipeline: de.richargh.pipematrix.domain.Pipeline): String {
+    private fun formatAuthor(pipeline: Pipeline): String {
         return pipeline.author?.shortName() ?: "Unknown"
     }
 

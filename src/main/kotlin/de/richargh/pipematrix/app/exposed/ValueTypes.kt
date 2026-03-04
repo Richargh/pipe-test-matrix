@@ -1,4 +1,4 @@
-package de.richargh.pipematrix.domain
+package de.richargh.pipematrix.app.exposed
 
 /**
  * Represents a GitLab project path (e.g., "mygroup/myproject").

@@ -1,6 +1,15 @@
 package de.richargh.pipematrix.presentation
 
-import de.richargh.pipematrix.domain.*
+import de.richargh.pipematrix.app.exposed.AuthorName
+import de.richargh.pipematrix.app.exposed.ClassnameGroup
+import de.richargh.pipematrix.app.exposed.CommitSha
+import de.richargh.pipematrix.app.exposed.FailureVariant
+import de.richargh.pipematrix.app.exposed.HeaderMode
+import de.richargh.pipematrix.app.exposed.Pipeline
+import de.richargh.pipematrix.app.exposed.PipelineId
+import de.richargh.pipematrix.app.exposed.PipelineStatus
+import de.richargh.pipematrix.app.exposed.SortMode
+import de.richargh.pipematrix.app.exposed.TestMatrix
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import org.junit.jupiter.api.Test

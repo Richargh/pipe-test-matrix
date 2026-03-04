@@ -4,12 +4,13 @@ import com.gitlab.api.GitLabApiException
 import com.gitlab.api.GitLabClient
 import de.richargh.pipematrix.presentation.TestMatrixCommand
 import de.richargh.pipematrix.config.Config.Companion.fromEnvironment
-import de.richargh.pipematrix.domain.BranchName
-import de.richargh.pipematrix.domain.FailureThreshold
-import de.richargh.pipematrix.domain.HeaderMode
-import de.richargh.pipematrix.domain.ProjectPath
+import de.richargh.pipematrix.app.exposed.BranchName
+import de.richargh.pipematrix.app.exposed.FailureThreshold
+import de.richargh.pipematrix.app.exposed.HeaderMode
+import de.richargh.pipematrix.app.exposed.ProjectPath
 import de.richargh.pipematrix.presentation.TableRenderer
-import de.richargh.pipematrix.repository.TestMatrixRepository
+import de.richargh.pipematrix.app.TestMatrixFacade
+import de.richargh.pipematrix.app.exposed.SortMode
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -90,7 +91,7 @@ private fun runApplication(command: TestMatrixCommand) {
             println()
 
             // Create repository
-            val repository = TestMatrixRepository(
+            val repository = TestMatrixFacade(
                 gitLabClient = gitLabClient,
                 failureThreshold = FailureThreshold(config.failureThreshold)
             )
@@ -113,11 +114,11 @@ private fun runApplication(command: TestMatrixCommand) {
 
             // Parse sort mode
             val sortMode = when (command.sortMode.lowercase()) {
-                "name" -> de.richargh.pipematrix.domain.SortMode.NAME
-                "count" -> de.richargh.pipematrix.domain.SortMode.COUNT
+                "name" -> SortMode.NAME
+                "count" -> SortMode.COUNT
                 else -> {
                     System.err.println("Warning: Invalid sort mode '${command.sortMode}'. Using 'count' as default.")
-                    de.richargh.pipematrix.domain.SortMode.COUNT
+                    SortMode.COUNT
                 }
             }
 

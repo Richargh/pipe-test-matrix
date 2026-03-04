@@ -1,4 +1,13 @@
-package de.richargh.pipematrix.domain
+package de.richargh.pipematrix.app.hidden
+
+import de.richargh.pipematrix.app.exposed.ClassnameGroup
+import de.richargh.pipematrix.app.exposed.FailureThreshold
+import de.richargh.pipematrix.app.exposed.FailureVariant
+import de.richargh.pipematrix.app.exposed.Pipeline
+import de.richargh.pipematrix.app.exposed.PipelineId
+import de.richargh.pipematrix.app.exposed.TestFailure
+import de.richargh.pipematrix.app.exposed.TestMatrix
+import kotlin.collections.iterator
 
 /**
  * Builder for constructing TestMatrix from pipelines and test failures.
@@ -13,10 +22,10 @@ object MatrixBuilder {
      * @return A TestMatrix with organized test failure data grouped by classname
      */
     fun build(
-        pipelines: List<de.richargh.pipematrix.domain.Pipeline>,
-        failuresByPipeline: Map<de.richargh.pipematrix.domain.PipelineId, List<de.richargh.pipematrix.domain.TestFailure>>,
-        threshold: de.richargh.pipematrix.domain.FailureThreshold
-    ): de.richargh.pipematrix.domain.TestMatrix {
+        pipelines: List<Pipeline>,
+        failuresByPipeline: Map<PipelineId, List<TestFailure>>,
+        threshold: FailureThreshold
+    ): TestMatrix {
         // Identify overloaded pipelines (those exceeding the threshold)
         val overloadedPipelines = failuresByPipeline
             .filter { (_, failures) -> threshold.isExceeded(failures.size) }

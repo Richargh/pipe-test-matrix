@@ -1,4 +1,4 @@
-package de.richargh.pipematrix.domain
+package de.richargh.pipematrix.app.exposed
 
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe

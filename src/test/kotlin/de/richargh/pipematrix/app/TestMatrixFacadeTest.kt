@@ -1,4 +1,4 @@
-package de.richargh.pipematrix.repository
+package de.richargh.pipematrix.app
 
 import com.gitlab.api.GitLabApiException
 import com.gitlab.api.GitLabClient
@@ -7,7 +7,11 @@ import com.gitlab.api.GitLabTestCase
 import com.gitlab.api.GitLabTestReportResponse
 import com.gitlab.api.GitLabTestSuite
 import com.gitlab.api.GitLabUser
-import de.richargh.pipematrix.domain.*
+import de.richargh.pipematrix.app.exposed.BranchName
+import de.richargh.pipematrix.app.exposed.FailureThreshold
+import de.richargh.pipematrix.app.exposed.PipelineId
+import de.richargh.pipematrix.app.exposed.PipelineStatus
+import de.richargh.pipematrix.app.exposed.ProjectPath
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.ktor.client.*
@@ -50,12 +54,12 @@ class FakeGitLabClient : GitLabClient(
     }
 }
 
-class TestMatrixRepositorySimpleTest {
+class TestMatrixFacadeTest {
 
     @Test
     fun `should fetch and build test matrix successfully`() = runTest {
         val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixRepository(fakeClient, FailureThreshold(20))
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
         // Setup fake data
         fakeClient.pipelinesToReturn = listOf(
@@ -148,7 +152,7 @@ class TestMatrixRepositorySimpleTest {
     @Test
     fun `should handle pipeline with more than 20 failures`() = runTest {
         val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixRepository(fakeClient, FailureThreshold(20))
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
         fakeClient.pipelinesToReturn = listOf(
             GitLabPipelineResponse(
@@ -212,7 +216,7 @@ class TestMatrixRepositorySimpleTest {
     @Test
     fun `should propagate GitLab API exceptions`() = runTest {
         val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixRepository(fakeClient, FailureThreshold(20))
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
         fakeClient.shouldThrowException = true
         fakeClient.exceptionToThrow = GitLabApiException("Authentication failed")
@@ -231,7 +235,7 @@ class TestMatrixRepositorySimpleTest {
     @Test
     fun `should skip test reports for pipelines with no test data`() = runTest {
         val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixRepository(fakeClient, FailureThreshold(20))
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
         fakeClient.pipelinesToReturn = listOf(
             GitLabPipelineResponse(
@@ -271,7 +275,7 @@ class TestMatrixRepositorySimpleTest {
     @Test
     fun `should invoke progress callback for each pipeline`() = runTest {
         val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixRepository(fakeClient, FailureThreshold(20))
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
         fakeClient.pipelinesToReturn = listOf(
             GitLabPipelineResponse(
@@ -326,7 +330,7 @@ class TestMatrixRepositorySimpleTest {
     @Test
     fun `should map author name from user data`() = runTest {
         val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixRepository(fakeClient, FailureThreshold(20))
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
         fakeClient.pipelinesToReturn = listOf(
             GitLabPipelineResponse(

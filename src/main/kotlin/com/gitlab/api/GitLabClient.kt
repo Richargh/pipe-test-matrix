@@ -1,8 +1,8 @@
 package com.gitlab.api
 
-import de.richargh.pipematrix.domain.BranchName
-import de.richargh.pipematrix.domain.PipelineId
-import de.richargh.pipematrix.domain.ProjectPath
+import de.richargh.pipematrix.app.exposed.BranchName
+import de.richargh.pipematrix.app.exposed.PipelineId
+import de.richargh.pipematrix.app.exposed.ProjectPath
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*

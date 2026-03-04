@@ -1,4 +1,4 @@
-package de.richargh.pipematrix.domain
+package de.richargh.pipematrix.app.exposed
 
 import java.time.Instant
 
@@ -28,11 +28,11 @@ enum class SortMode {
  * Represents a GitLab pipeline run.
  */
 data class Pipeline(
-    val id: de.richargh.pipematrix.domain.PipelineId,
-    val sha: de.richargh.pipematrix.domain.CommitSha,
+    val id: PipelineId,
+    val sha: CommitSha,
     val createdAt: Instant,
-    val status: de.richargh.pipematrix.domain.PipelineStatus,
-    val author: de.richargh.pipematrix.domain.AuthorName?
+    val status: PipelineStatus,
+    val author: AuthorName?
 )
 
 /**
@@ -41,7 +41,7 @@ data class Pipeline(
 data class TestFailure(
     val classname: String,
     val testName: String,
-    val pipelineId: de.richargh.pipematrix.domain.PipelineId,
+    val pipelineId: PipelineId,
     val systemOutput: String?,
     val stackTrace: String?
 )
@@ -55,7 +55,7 @@ data class FailureVariant(
     val testName: String,
     val systemOutput: String?,
     val stackTrace: String?,
-    val pipelineIds: Set<de.richargh.pipematrix.domain.PipelineId>
+    val pipelineIds: Set<PipelineId>
 )
 
 /**
@@ -68,7 +68,7 @@ data class ClassnameGroup(
     /**
      * Returns the letter for a specific failure variant in a pipeline, or null if not present.
      */
-    fun getLetterForPipeline(pipelineId: de.richargh.pipematrix.domain.PipelineId): List<String> {
+    fun getLetterForPipeline(pipelineId: PipelineId): List<String> {
         return variants.filter { it.pipelineIds.contains(pipelineId) }.map { it.letter }
     }
 }
@@ -82,21 +82,21 @@ data class ClassnameGroup(
  * @property overloadedPipelineFailures Map of overloaded pipeline IDs to their failure variants
  */
 data class TestMatrix(
-    val pipelines: List<de.richargh.pipematrix.domain.Pipeline>,
+    val pipelines: List<Pipeline>,
     val classnameGroups: List<ClassnameGroup>,
-    val overloadedPipelines: Set<de.richargh.pipematrix.domain.PipelineId>,
-    val overloadedPipelineFailures: Map<de.richargh.pipematrix.domain.PipelineId, List<FailureVariant>> = emptyMap()
+    val overloadedPipelines: Set<PipelineId>,
+    val overloadedPipelineFailures: Map<PipelineId, List<FailureVariant>> = emptyMap()
 ) {
     /**
      * Checks if a pipeline is marked as overloaded (>20 failures).
      */
-    fun isOverloaded(pipelineId: de.richargh.pipematrix.domain.PipelineId): Boolean =
+    fun isOverloaded(pipelineId: PipelineId): Boolean =
         pipelineId in overloadedPipelines
 
     /**
      * Returns letters that failed in a specific pipeline for overloaded pipelines.
      */
-    fun getOverloadedFailureLetters(pipelineId: de.richargh.pipematrix.domain.PipelineId): List<String> =
+    fun getOverloadedFailureLetters(pipelineId: PipelineId): List<String> =
         overloadedPipelineFailures[pipelineId]?.map { it.letter } ?: emptyList()
 
     /**

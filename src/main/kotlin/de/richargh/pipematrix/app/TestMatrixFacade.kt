@@ -1,9 +1,19 @@
-package de.richargh.pipematrix.repository
+package de.richargh.pipematrix.app
 
 import com.gitlab.api.GitLabClient
 import com.gitlab.api.GitLabPipelineResponse
 import com.gitlab.api.GitLabTestReportResponse
-import de.richargh.pipematrix.domain.*
+import de.richargh.pipematrix.app.exposed.AuthorName
+import de.richargh.pipematrix.app.exposed.BranchName
+import de.richargh.pipematrix.app.exposed.CommitSha
+import de.richargh.pipematrix.app.exposed.FailureThreshold
+import de.richargh.pipematrix.app.exposed.Pipeline
+import de.richargh.pipematrix.app.exposed.PipelineId
+import de.richargh.pipematrix.app.exposed.PipelineStatus
+import de.richargh.pipematrix.app.exposed.ProjectPath
+import de.richargh.pipematrix.app.exposed.TestFailure
+import de.richargh.pipematrix.app.exposed.TestMatrix
+import de.richargh.pipematrix.app.hidden.MatrixBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -15,9 +25,9 @@ import java.time.Instant
  * @property gitLabClient The GitLab API client to use for fetching data
  * @property failureThreshold The threshold for marking pipelines as overloaded
  */
-class TestMatrixRepository(
+class TestMatrixFacade(
     private val gitLabClient: GitLabClient,
-    private val failureThreshold: de.richargh.pipematrix.domain.FailureThreshold
+    private val failureThreshold: FailureThreshold
 ) {
     /**
      * Fetches test matrix data for a specific project and branch.
@@ -30,12 +40,12 @@ class TestMatrixRepository(
      * @return A TestMatrix containing pipeline and test failure data
      */
     suspend fun fetchTestMatrix(
-        projectPath: de.richargh.pipematrix.domain.ProjectPath,
-        branch: de.richargh.pipematrix.domain.BranchName,
+        projectPath: ProjectPath,
+        branch: BranchName,
         pipelineCount: Int = 10,
         onProgress: ((current: Int, total: Int) -> Unit)? = null,
         debugTestNames: Boolean = false
-    ): de.richargh.pipematrix.domain.TestMatrix {
+    ): TestMatrix {
         // Fetch pipelines
         val pipelineResponses = gitLabClient.fetchPipelines(projectPath, branch, pipelineCount)
 

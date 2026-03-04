@@ -1,4 +1,4 @@
-package de.richargh.pipematrix.domain
+package de.richargh.pipematrix.app
 
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
