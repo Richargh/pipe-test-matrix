@@ -16,8 +16,11 @@ class ArchitectureTest {
         private const val APP_EXPOSED = "..app.exposed.."
         private const val APP_HIDDEN = "..app.hidden.."
         private const val CONFIG = "..config.."
+        private const val CONFIG_HIDDEN = "..config.hidden.."
         private const val INFRASTRUCTURE = "..infrastructure.."
+        private const val INFRASTRUCTURE_HIDDEN = "..infrastructure.hidden.."
         private const val PRESENTATION = "..presentation.."
+        private const val PRESENTATION_HIDDEN = "..presentation.hidden.."
 
         private val STANDARD_LIBS = arrayOf(
             "java..",
@@ -46,6 +49,23 @@ class ArchitectureTest {
             )
             .because("App slice must be isolated from other application slices")
             .check(classes)
+    }
+
+    @Test
+    fun `hidden packages in any slice are only accessible from that slice`(classes: JavaClasses) {
+        // Check each slice's hidden package
+        listOf(
+            APP to APP_HIDDEN,
+            CONFIG to CONFIG_HIDDEN,
+            INFRASTRUCTURE to INFRASTRUCTURE_HIDDEN,
+            PRESENTATION to PRESENTATION_HIDDEN
+        ).forEach { (slicePackage, hiddenPackage) ->
+            noClasses()
+                .that().resideOutsideOfPackage(slicePackage)
+                .should().dependOnClassesThat().resideInAPackage(hiddenPackage)
+                .because("Hidden package '$hiddenPackage' should only be accessible from '$slicePackage'")
+                .check(classes)
+        }
     }
 
 }
