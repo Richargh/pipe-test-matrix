@@ -1,7 +1,7 @@
 package de.richargh.pipematrix
 
-import com.gitlab.api.GitLabApiException
-import com.gitlab.api.GitLabClient
+import de.richargh.pipematrix.infrastructure.GitLabApiException
+import de.richargh.pipematrix.infrastructure.GitLabClient
 import de.richargh.pipematrix.presentation.TestMatrixCommand
 import de.richargh.pipematrix.config.Config.Companion.fromEnvironment
 import de.richargh.pipematrix.app.exposed.BranchName
@@ -92,7 +92,7 @@ private fun runApplication(command: TestMatrixCommand) {
 
             // Create repository
             val repository = TestMatrixFacade(
-                gitLabClient = gitLabClient,
+                pipelineClient = gitLabClient,
                 failureThreshold = FailureThreshold(config.failureThreshold)
             )
 

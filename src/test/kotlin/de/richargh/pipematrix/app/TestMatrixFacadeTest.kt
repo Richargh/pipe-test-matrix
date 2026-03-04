@@ -1,7 +1,6 @@
 package de.richargh.pipematrix.app
 
-import com.gitlab.api.GitLabApiException
-import com.gitlab.api.GitLabClient
+import de.richargh.pipematrix.infrastructure.GitLabApiException
 import com.gitlab.api.GitLabPipelineResponse
 import com.gitlab.api.GitLabTestCase
 import com.gitlab.api.GitLabTestReportResponse
@@ -9,35 +8,37 @@ import com.gitlab.api.GitLabTestSuite
 import com.gitlab.api.GitLabUser
 import de.richargh.pipematrix.app.exposed.BranchName
 import de.richargh.pipematrix.app.exposed.FailureThreshold
+import de.richargh.pipematrix.app.exposed.PipelineClient
 import de.richargh.pipematrix.app.exposed.PipelineId
 import de.richargh.pipematrix.app.exposed.PipelineStatus
 import de.richargh.pipematrix.app.exposed.ProjectPath
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
-import io.ktor.client.*
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 
-/**
- * Fake implementation of GitLabClient for testing.
- */
-class FakeGitLabClient : GitLabClient(
-    httpClient = HttpClient(),
-    baseUrl = "https://fake.gitlab.com",
-    token = "fake-token"
-) {
-    var pipelinesToReturn: List<GitLabPipelineResponse> = emptyList()
-    var testReportsToReturn: Map<Long, GitLabTestReportResponse> = emptyMap()
-    var shouldThrowException: Boolean = false
-    var exceptionToThrow: Exception? = null
+class FakeGitLabClient(
+    val pipelinesToReturn: List<GitLabPipelineResponse> = emptyList(),
+    val testReportsToReturn: Map<Long, GitLabTestReportResponse> = emptyMap(),
+    val exceptionToThrow: Exception? = null
+) : PipelineClient {
+
+
+    override suspend fun verifyConnection() {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun verifyProject(projectPath: ProjectPath) {
+        TODO("Not yet implemented")
+    }
 
     override suspend fun fetchPipelines(
         projectPath: ProjectPath,
         branch: BranchName,
         count: Int
     ): List<GitLabPipelineResponse> {
-        if (shouldThrowException && exceptionToThrow != null) {
-            throw exceptionToThrow!!
+        if (exceptionToThrow != null) {
+            throw exceptionToThrow
         }
         return pipelinesToReturn
     }
@@ -46,11 +47,15 @@ class FakeGitLabClient : GitLabClient(
         projectPath: ProjectPath,
         pipelineId: PipelineId
     ): GitLabTestReportResponse {
-        if (shouldThrowException && exceptionToThrow != null) {
-            throw exceptionToThrow!!
+        if (exceptionToThrow != null) {
+            throw exceptionToThrow
         }
         return testReportsToReturn[pipelineId.value]
             ?: GitLabTestReportResponse(0.0, 0, 0, 0, 0, 0, emptyList())
+    }
+
+    override fun close() {
+        TODO("Not yet implemented")
     }
 }
 
@@ -58,11 +63,8 @@ class TestMatrixFacadeTest {
 
     @Test
     fun `should fetch and build test matrix successfully`() = runTest {
-        val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
-
-        // Setup fake data
-        fakeClient.pipelinesToReturn = listOf(
+        // Given
+        val pipelinesToReturn = listOf(
             GitLabPipelineResponse(
                 id = 1,
                 sha = "abc123",
@@ -79,7 +81,7 @@ class TestMatrixFacadeTest {
             )
         )
 
-        fakeClient.testReportsToReturn = mapOf(
+        val testReportsToReturn = mapOf(
             1L to GitLabTestReportResponse(
                 totalTime = 5.4,
                 totalCount = 5,
@@ -125,15 +127,17 @@ class TestMatrixFacadeTest {
                 testSuites = emptyList()
             )
         )
+        val fakeClient = FakeGitLabClient(pipelinesToReturn, testReportsToReturn)
+        val testee = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
-        // Execute
-        val matrix = repository.fetchTestMatrix(
+        // When
+        val matrix = testee.fetchTestMatrix(
             ProjectPath("mygroup/myproject"),
             BranchName("main"),
             pipelineCount = 10
         )
 
-        // Verify
+        // Then
         matrix.pipelines.size shouldBe 2
         matrix.pipelines[0].id.value shouldBe 1
         matrix.pipelines[0].sha.value shouldBe "abc123"
@@ -151,10 +155,7 @@ class TestMatrixFacadeTest {
 
     @Test
     fun `should handle pipeline with more than 20 failures`() = runTest {
-        val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
-
-        fakeClient.pipelinesToReturn = listOf(
+        val pipelinesToReturn = listOf(
             GitLabPipelineResponse(
                 id = 1,
                 sha = "abc123",
@@ -175,7 +176,7 @@ class TestMatrixFacadeTest {
             )
         }
 
-        fakeClient.testReportsToReturn = mapOf(
+        val testReportsToReturn = mapOf(
             1L to GitLabTestReportResponse(
                 totalTime = 10.0,
                 totalCount = 25,
@@ -197,15 +198,18 @@ class TestMatrixFacadeTest {
                 )
             )
         )
+        val fakeClient = FakeGitLabClient(pipelinesToReturn, testReportsToReturn)
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
-        // Execute
+
+        // When
         val matrix = repository.fetchTestMatrix(
             ProjectPath("mygroup/myproject"),
             BranchName("main"),
             pipelineCount = 10
         )
 
-        // Verify
+        // Then
         matrix.overloadedPipelines shouldBe setOf(PipelineId(1))
         // Overloaded pipelines don't appear in the main classname groups
         matrix.classnameGroups.size shouldBe 0
@@ -215,12 +219,12 @@ class TestMatrixFacadeTest {
 
     @Test
     fun `should propagate GitLab API exceptions`() = runTest {
-        val fakeClient = FakeGitLabClient()
+        // Given
+        val exceptionToThrow = GitLabApiException("Authentication failed")
+        val fakeClient = FakeGitLabClient(exceptionToThrow = exceptionToThrow)
         val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
-        fakeClient.shouldThrowException = true
-        fakeClient.exceptionToThrow = GitLabApiException("Authentication failed")
-
+        // When & Then
         val exception = shouldThrow<GitLabApiException> {
             repository.fetchTestMatrix(
                 ProjectPath("mygroup/myproject"),
@@ -234,10 +238,8 @@ class TestMatrixFacadeTest {
 
     @Test
     fun `should skip test reports for pipelines with no test data`() = runTest {
-        val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
-
-        fakeClient.pipelinesToReturn = listOf(
+        // Given
+        val pipelinesToReturn = listOf(
             GitLabPipelineResponse(
                 id = 1,
                 sha = "abc123",
@@ -247,7 +249,7 @@ class TestMatrixFacadeTest {
             )
         )
 
-        fakeClient.testReportsToReturn = mapOf(
+        val testReportsToReturn = mapOf(
             1L to GitLabTestReportResponse(
                 totalTime = 0.0,
                 totalCount = 0,
@@ -258,15 +260,17 @@ class TestMatrixFacadeTest {
                 testSuites = emptyList()
             )
         )
+        val fakeClient = FakeGitLabClient(pipelinesToReturn, testReportsToReturn)
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
 
-        // Execute
+        // When
         val matrix = repository.fetchTestMatrix(
             ProjectPath("mygroup/myproject"),
             BranchName("main"),
             pipelineCount = 10
         )
 
-        // Verify
+        // Then
         matrix.pipelines.size shouldBe 1
         matrix.classnameGroups shouldBe emptyList()
         matrix.overloadedPipelines shouldBe emptySet()
@@ -274,10 +278,7 @@ class TestMatrixFacadeTest {
 
     @Test
     fun `should invoke progress callback for each pipeline`() = runTest {
-        val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
-
-        fakeClient.pipelinesToReturn = listOf(
+        val pipelinesToReturn = listOf(
             GitLabPipelineResponse(
                 id = 1,
                 sha = "abc123",
@@ -301,16 +302,16 @@ class TestMatrixFacadeTest {
             )
         )
 
-        fakeClient.testReportsToReturn = mapOf(
+        val testReportsToReturn = mapOf(
             1L to GitLabTestReportResponse(0.0, 0, 0, 0, 0, 0, emptyList()),
             2L to GitLabTestReportResponse(0.0, 0, 0, 0, 0, 0, emptyList()),
             3L to GitLabTestReportResponse(0.0, 0, 0, 0, 0, 0, emptyList())
         )
-
-        // Track progress callbacks
+        val fakeClient = FakeGitLabClient(pipelinesToReturn, testReportsToReturn)
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
         val progressUpdates = mutableListOf<Pair<Int, Int>>()
 
-        // Execute with progress callback
+        // When
         repository.fetchTestMatrix(
             ProjectPath("mygroup/myproject"),
             BranchName("main"),
@@ -320,7 +321,7 @@ class TestMatrixFacadeTest {
             }
         )
 
-        // Verify progress callback was invoked correctly
+        // Then
         progressUpdates.size shouldBe 3
         progressUpdates[0] shouldBe (1 to 3)
         progressUpdates[1] shouldBe (2 to 3)
@@ -329,10 +330,8 @@ class TestMatrixFacadeTest {
 
     @Test
     fun `should map author name from user data`() = runTest {
-        val fakeClient = FakeGitLabClient()
-        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
-
-        fakeClient.pipelinesToReturn = listOf(
+        // Given
+        val pipelinesToReturn = listOf(
             GitLabPipelineResponse(
                 id = 1,
                 sha = "abc123",
@@ -366,20 +365,21 @@ class TestMatrixFacadeTest {
                 user = null  // No user data
             )
         )
-
-        fakeClient.testReportsToReturn = mapOf(
+        val testReportsToReturn = mapOf(
             1L to GitLabTestReportResponse(0.0, 0, 0, 0, 0, 0, emptyList()),
             2L to GitLabTestReportResponse(0.0, 0, 0, 0, 0, 0, emptyList()),
             3L to GitLabTestReportResponse(0.0, 0, 0, 0, 0, 0, emptyList())
         )
-
+        val fakeClient = FakeGitLabClient(pipelinesToReturn, testReportsToReturn)
+        val repository = TestMatrixFacade(fakeClient, FailureThreshold(20))
+        // When
         val matrix = repository.fetchTestMatrix(
             ProjectPath("mygroup/myproject"),
             BranchName("main"),
             pipelineCount = 10
         )
 
-        // Verify author mapping
+        // Then
         matrix.pipelines[0].author?.value shouldBe "John Doe"
         matrix.pipelines[1].author?.value shouldBe "janedoe"
         matrix.pipelines[2].author shouldBe null

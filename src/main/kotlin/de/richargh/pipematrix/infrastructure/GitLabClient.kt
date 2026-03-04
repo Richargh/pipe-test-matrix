@@ -1,6 +1,9 @@
-package com.gitlab.api
+package de.richargh.pipematrix.infrastructure
 
+import com.gitlab.api.GitLabPipelineResponse
+import com.gitlab.api.GitLabTestReportResponse
 import de.richargh.pipematrix.app.exposed.BranchName
+import de.richargh.pipematrix.app.exposed.PipelineClient
 import de.richargh.pipematrix.app.exposed.PipelineId
 import de.richargh.pipematrix.app.exposed.ProjectPath
 import io.ktor.client.*
@@ -15,17 +18,13 @@ import io.ktor.http.*
  * @property baseUrl The base URL of the GitLab instance (e.g., "https://gitlab.com")
  * @property token The GitLab personal access token for authentication
  */
-open class GitLabClient(
+class GitLabClient(
     private val httpClient: HttpClient,
     private val baseUrl: String,
     private val token: String
-) {
-    /**
-     * Verifies that the GitLab URL is reachable and the auth token is valid.
-     *
-     * @throws GitLabApiException if the URL is unreachable or token is invalid
-     */
-    open suspend fun verifyConnection() {
+) : PipelineClient {
+
+    override suspend fun verifyConnection() {
         val url = "$baseUrl/api/v4/user"
 
         try {
@@ -53,7 +52,7 @@ open class GitLabClient(
      * @param projectPath The GitLab project path to verify
      * @throws GitLabApiException if the project doesn't exist or isn't accessible
      */
-    open suspend fun verifyProject(projectPath: ProjectPath) {
+    override suspend fun verifyProject(projectPath: ProjectPath) {
         val encodedPath = encodeProjectPath(projectPath.value)
         val url = "$baseUrl/api/v4/projects/$encodedPath"
 
@@ -76,19 +75,10 @@ open class GitLabClient(
         }
     }
 
-    /**
-     * Fetches pipelines for a specific project and branch.
-     *
-     * @param projectPath The GitLab project path (e.g., "mygroup/myproject")
-     * @param branch The branch name to fetch pipelines for
-     * @param count The number of pipelines to fetch (default: 10)
-     * @return List of pipeline responses from GitLab API
-     * @throws GitLabApiException if the API request fails
-     */
-    open suspend fun fetchPipelines(
+    override suspend fun fetchPipelines(
         projectPath: ProjectPath,
         branch: BranchName,
-        count: Int = 10
+        count: Int
     ): List<GitLabPipelineResponse> {
         val encodedPath = encodeProjectPath(projectPath.value)
         val url = "$baseUrl/api/v4/projects/$encodedPath/pipelines"
@@ -116,15 +106,7 @@ open class GitLabClient(
         }
     }
 
-    /**
-     * Fetches the test report for a specific pipeline.
-     *
-     * @param projectPath The GitLab project path
-     * @param pipelineId The pipeline ID to fetch the test report for
-     * @return Test report response from GitLab API
-     * @throws GitLabApiException if the API request fails
-     */
-    open suspend fun fetchTestReport(
+    override suspend fun fetchTestReport(
         projectPath: ProjectPath,
         pipelineId: PipelineId
     ): GitLabTestReportResponse {
@@ -152,10 +134,6 @@ open class GitLabClient(
         }
     }
 
-    /**
-     * Encodes a project path for use in URLs.
-     * GitLab requires project paths to be URL-encoded (e.g., "group/project" becomes "group%2Fproject").
-     */
     private fun encodeProjectPath(path: String): String {
         return path.replace("/", "%2F")
     }
@@ -179,7 +157,7 @@ open class GitLabClient(
     /**
      * Closes the HTTP client. Should be called when done using the client.
      */
-    fun close() {
+    override fun close() {
         httpClient.close()
     }
 }

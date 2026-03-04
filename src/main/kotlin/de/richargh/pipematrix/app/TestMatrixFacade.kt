@@ -1,8 +1,8 @@
 package de.richargh.pipematrix.app
 
-import com.gitlab.api.GitLabClient
 import com.gitlab.api.GitLabPipelineResponse
 import com.gitlab.api.GitLabTestReportResponse
+import de.richargh.pipematrix.app.exposed.PipelineClient
 import de.richargh.pipematrix.app.exposed.AuthorName
 import de.richargh.pipematrix.app.exposed.BranchName
 import de.richargh.pipematrix.app.exposed.CommitSha
@@ -19,26 +19,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import java.time.Instant
 
-/**
- * Repository for fetching and building test matrices from GitLab.
- *
- * @property gitLabClient The GitLab API client to use for fetching data
- * @property failureThreshold The threshold for marking pipelines as overloaded
- */
 class TestMatrixFacade(
-    private val gitLabClient: GitLabClient,
+    private val pipelineClient: PipelineClient,
     private val failureThreshold: FailureThreshold
 ) {
-    /**
-     * Fetches test matrix data for a specific project and branch.
-     *
-     * @param projectPath The GitLab project path
-     * @param branch The branch name to fetch data for
-     * @param pipelineCount The number of pipelines to fetch
-     * @param onProgress Optional callback invoked after processing each pipeline (current, total)
-     * @param debugTestNames If true, prints raw test case data to help identify available fields
-     * @return A TestMatrix containing pipeline and test failure data
-     */
     suspend fun fetchTestMatrix(
         projectPath: ProjectPath,
         branch: BranchName,
@@ -47,7 +31,7 @@ class TestMatrixFacade(
         debugTestNames: Boolean = false
     ): TestMatrix {
         // Fetch pipelines
-        val pipelineResponses = gitLabClient.fetchPipelines(projectPath, branch, pipelineCount)
+        val pipelineResponses = pipelineClient.fetchPipelines(projectPath, branch, pipelineCount)
 
         // Debug pipeline user data if requested
         if (debugTestNames && pipelineResponses.isNotEmpty()) {
@@ -73,7 +57,7 @@ class TestMatrixFacade(
             pipelineResponses.mapIndexed { index, pipelineResponse ->
                 async {
                     val pipelineId = PipelineId(pipelineResponse.id)
-                    val testReport = gitLabClient.fetchTestReport(projectPath, pipelineId)
+                    val testReport = pipelineClient.fetchTestReport(projectPath, pipelineId)
 
                     // Extract failures from test report
                     val failures = extractFailures(testReport, pipelineId, debugTestNames && index == 0)
@@ -97,9 +81,6 @@ class TestMatrixFacade(
         )
     }
 
-    /**
-     * Extracts test failures from a GitLab test report.
-     */
     private fun extractFailures(
         testReport: GitLabTestReportResponse,
         pipelineId: PipelineId,
@@ -144,9 +125,6 @@ class TestMatrixFacade(
 
 }
 
-/**
- * Extension function to convert GitLabPipelineResponse to domain Pipeline.
- */
 private fun GitLabPipelineResponse.toDomain(): Pipeline {
     return Pipeline(
         id = PipelineId(this.id),
@@ -157,9 +135,6 @@ private fun GitLabPipelineResponse.toDomain(): Pipeline {
     )
 }
 
-/**
- * Extracts author name from pipeline response, trying multiple sources.
- */
 private fun extractAuthorName(pipeline: GitLabPipelineResponse): AuthorName? {
     // Try user object first (if present)
     val userName = pipeline.user?.name ?: pipeline.user?.username
@@ -189,9 +164,6 @@ private fun extractAuthorName(pipeline: GitLabPipelineResponse): AuthorName? {
     return null
 }
 
-/**
- * Maps GitLab pipeline status string to domain PipelineStatus enum.
- */
 private fun mapPipelineStatus(status: String): PipelineStatus {
     return when (status.lowercase()) {
         "success" -> PipelineStatus.SUCCESS
