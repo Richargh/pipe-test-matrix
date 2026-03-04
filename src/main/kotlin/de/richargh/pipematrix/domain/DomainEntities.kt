@@ -15,6 +15,16 @@ enum class PipelineStatus {
 }
 
 /**
+ * Sort mode for test matrix display.
+ */
+enum class SortMode {
+    /** Sort by classname alphabetically (descending Z-A) */
+    NAME,
+    /** Sort by total failure count (descending, most failures first) */
+    COUNT
+}
+
+/**
  * Represents a GitLab pipeline run.
  */
 data class Pipeline(
@@ -29,24 +39,53 @@ data class Pipeline(
  * Represents a single test failure.
  */
 data class TestFailure(
-    val testName: de.richargh.pipematrix.domain.TestName,
+    val classname: String,
+    val testName: String,
     val pipelineId: de.richargh.pipematrix.domain.PipelineId,
-    val message: String?
+    val systemOutput: String?,
+    val stackTrace: String?
 )
+
+/**
+ * Represents a unique failure variant within a classname group.
+ * Multiple pipelines may have the same failure variant.
+ */
+data class FailureVariant(
+    val letter: String,
+    val testName: String,
+    val systemOutput: String?,
+    val stackTrace: String?,
+    val pipelineIds: Set<de.richargh.pipematrix.domain.PipelineId>
+)
+
+/**
+ * Represents all failure variants for a specific test classname.
+ */
+data class ClassnameGroup(
+    val classname: String,
+    val variants: List<FailureVariant>
+) {
+    /**
+     * Returns the letter for a specific failure variant in a pipeline, or null if not present.
+     */
+    fun getLetterForPipeline(pipelineId: de.richargh.pipematrix.domain.PipelineId): List<String> {
+        return variants.filter { it.pipelineIds.contains(pipelineId) }.map { it.letter }
+    }
+}
 
 /**
  * Represents the complete test matrix.
  *
  * @property pipelines List of pipelines, ordered chronologically (most recent first)
- * @property testFailures Map of test names to the set of pipeline IDs where they failed
+ * @property classnameGroups List of classname groups with their failure variants
  * @property overloadedPipelines Set of pipeline IDs that exceeded the failure threshold
- * @property overloadedPipelineFailures Map of overloaded pipeline IDs to the tests that failed in them
+ * @property overloadedPipelineFailures Map of overloaded pipeline IDs to their failure variants
  */
 data class TestMatrix(
     val pipelines: List<de.richargh.pipematrix.domain.Pipeline>,
-    val testFailures: Map<de.richargh.pipematrix.domain.TestName, Set<de.richargh.pipematrix.domain.PipelineId>>,
+    val classnameGroups: List<ClassnameGroup>,
     val overloadedPipelines: Set<de.richargh.pipematrix.domain.PipelineId>,
-    val overloadedPipelineFailures: Map<de.richargh.pipematrix.domain.PipelineId, Set<de.richargh.pipematrix.domain.TestName>> = emptyMap()
+    val overloadedPipelineFailures: Map<de.richargh.pipematrix.domain.PipelineId, List<FailureVariant>> = emptyMap()
 ) {
     /**
      * Checks if a pipeline is marked as overloaded (>20 failures).
@@ -55,28 +94,21 @@ data class TestMatrix(
         pipelineId in overloadedPipelines
 
     /**
-     * Checks if a specific test failed in a specific pipeline.
+     * Returns letters that failed in a specific pipeline for overloaded pipelines.
      */
-    fun didTestFail(testName: de.richargh.pipematrix.domain.TestName, pipelineId: de.richargh.pipematrix.domain.PipelineId): Boolean =
-        testFailures[testName]?.contains(pipelineId) ?: false
+    fun getOverloadedFailureLetters(pipelineId: de.richargh.pipematrix.domain.PipelineId): List<String> =
+        overloadedPipelineFailures[pipelineId]?.map { it.letter } ?: emptyList()
 
     /**
-     * Checks if a specific test failed in an overloaded pipeline.
+     * Returns classname groups sorted according to the specified mode.
      */
-    fun didTestFailInOverloadedPipeline(testName: de.richargh.pipematrix.domain.TestName, pipelineId: de.richargh.pipematrix.domain.PipelineId): Boolean =
-        overloadedPipelineFailures[pipelineId]?.contains(testName) ?: false
-
-    /**
-     * Returns all unique test names that failed across all pipelines.
-     */
-    fun getAllFailedTests(): List<de.richargh.pipematrix.domain.TestName> =
-        testFailures.keys.toList()
-
-    /**
-     * Returns all unique test names sorted by failure frequency (most frequent first).
-     */
-    fun getAllFailedTestsSortedByFrequency(): List<de.richargh.pipematrix.domain.TestName> =
-        testFailures.entries
-            .sortedByDescending { it.value.size }
-            .map { it.key }
+    fun getSortedClassnameGroups(sortMode: SortMode): List<ClassnameGroup> {
+        return when (sortMode) {
+            SortMode.NAME -> classnameGroups.sortedByDescending { it.classname }
+            SortMode.COUNT -> classnameGroups.sortedByDescending { group ->
+                // Total failure count is sum of all pipeline IDs across all variants
+                group.variants.sumOf { it.pipelineIds.size }
+            }
+        }
+    }
 }

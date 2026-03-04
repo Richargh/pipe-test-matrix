@@ -63,6 +63,25 @@ class TestMatrixCommand : Runnable {
     )
     var count: Int = 10
 
+    /**
+     * Debug mode - prints raw test case data to help identify available fields.
+     */
+    @Option(
+        names = ["--debug-test-names"],
+        description = ["Print raw test case data from first failed pipeline to identify field structure"]
+    )
+    var debugTestNames: Boolean = false
+
+    /**
+     * Sort mode for test results.
+     */
+    @Option(
+        names = ["-s", "--sort"],
+        description = ["Sort mode: 'name' (alphabetically descending) or 'count' (by failure count descending, default)"],
+        defaultValue = "count"
+    )
+    var sortMode: String = "count"
+
     override fun run() {
         // The actual execution logic will be in main()
         // This is just for parsing and validation

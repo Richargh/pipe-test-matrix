@@ -10,22 +10,25 @@ import java.time.format.FormatStyle
  * Renders a test matrix as an ASCII table.
  */
 object TableRenderer {
-    private const val MAX_TEST_NAME_LENGTH = 60
 
     /**
      * Renders a test matrix as a formatted ASCII table string.
      *
      * @param matrix The test matrix to render
+     * @param sortMode The sort mode to apply to the classname groups
      * @return A formatted string representation of the matrix
      */
-    fun render(matrix: de.richargh.pipematrix.domain.TestMatrix): String {
+    fun render(
+        matrix: de.richargh.pipematrix.domain.TestMatrix,
+        sortMode: de.richargh.pipematrix.domain.SortMode = de.richargh.pipematrix.domain.SortMode.COUNT
+    ): String {
         // Handle empty matrix
-        if (matrix.testFailures.isEmpty()) {
+        if (matrix.classnameGroups.isEmpty()) {
             return "No test failures found across ${matrix.pipelines.size} pipeline(s)."
         }
 
-        // Get tests sorted by failure frequency (most frequent first)
-        val sortedTests = matrix.getAllFailedTestsSortedByFrequency()
+        // Get sorted classname groups
+        val sortedGroups = matrix.getSortedClassnameGroups(sortMode)
 
         return table {
             cellStyle {
@@ -36,14 +39,14 @@ object TableRenderer {
 
             // Header row with pipeline information
             row {
-                cell("Test Name") {
-                    rowSpan = 4
+                cell("Test Class / Variant") {
+                    rowSpan = 5
                     alignment = TextAlignment.MiddleLeft
                 }
 
                 // Add column for each pipeline
                 for (pipeline in matrix.pipelines) {
-                    cell(formatPipelineHeader(pipeline, matrix, sortedTests)) {
+                    cell(formatPipelineHeader(pipeline, matrix)) {
                         alignment = TextAlignment.MiddleCenter
                     }
                 }
@@ -58,7 +61,16 @@ object TableRenderer {
                 }
             }
 
-            // Third header row with timestamp
+            // Third header row with status
+            row {
+                for (pipeline in matrix.pipelines) {
+                    cell(formatStatus(pipeline)) {
+                        alignment = TextAlignment.MiddleCenter
+                    }
+                }
+            }
+
+            // Fourth header row with timestamp
             row {
                 for (pipeline in matrix.pipelines) {
                     cell(formatTimestamp(pipeline)) {
@@ -67,7 +79,7 @@ object TableRenderer {
                 }
             }
 
-            // Fourth header row with author
+            // Fifth header row with author
             row {
                 for (pipeline in matrix.pipelines) {
                     cell(formatAuthor(pipeline)) {
@@ -76,20 +88,18 @@ object TableRenderer {
                 }
             }
 
-            // Data rows - one per test
-            for (testName in sortedTests) {
+            // Data rows - one per classname group (sorted)
+            for (group in sortedGroups) {
                 row {
-                    // Test name cell with failure count
-                    val failureCount = getFailureCount(matrix, testName)
-                    val testNameWithCount = "($failureCount) ${testName.value}"
-                    cell(truncateTestName(testNameWithCount)) {
-                        alignment = TextAlignment.MiddleLeft
+                    // Classname cell with all variants listed
+                    cell(formatClassnameGroup(group)) {
+                        alignment = TextAlignment.TopLeft
                     }
 
                     // Status cell for each pipeline
                     for (pipeline in matrix.pipelines) {
-                        val marker = getStatusMarker(matrix, testName, pipeline.id)
-                        cell(marker) {
+                        val letters = group.getLetterForPipeline(pipeline.id)
+                        cell(if (letters.isNotEmpty()) letters.joinToString(" ") else "") {
                             alignment = TextAlignment.MiddleCenter
                         }
                     }
@@ -99,40 +109,79 @@ object TableRenderer {
     }
 
     /**
+     * Formats a classname group with all its failure variants.
+     */
+    private fun formatClassnameGroup(group: de.richargh.pipematrix.domain.ClassnameGroup): String {
+        val lines = mutableListOf<String>()
+
+        // Add simple classname as header with total count (just the part after the last dot)
+        val simpleClassName = group.classname.substringAfterLast('.')
+        val totalCount = group.variants.sumOf { it.pipelineIds.size }
+        lines.add("$simpleClassName ($totalCount)")
+
+        // Add each variant
+        for (variant in group.variants) {
+            lines.add("  [${variant.letter}] ${variant.testName}")
+
+            // Add system output if present (truncated)
+            if (variant.systemOutput != null && variant.systemOutput.isNotBlank()) {
+                val truncatedOutput = truncateOutput(variant.systemOutput)
+                lines.add("      $truncatedOutput")
+            }
+
+            // Add stack trace (error) if present (truncated)
+            if (variant.stackTrace != null && variant.stackTrace.isNotBlank()) {
+                val truncatedTrace = truncateOutput(variant.stackTrace)
+                lines.add("      Error: $truncatedTrace")
+            }
+        }
+
+        return lines.joinToString("\n")
+    }
+
+    /**
+     * Truncates output to a reasonable length.
+     */
+    private fun truncateOutput(text: String, maxLength: Int = 80): String {
+        val singleLine = text.replace("\n", " ").trim()
+        return if (singleLine.length > maxLength) {
+            singleLine.take(maxLength - 3) + "..."
+        } else {
+            singleLine
+        }
+    }
+
+    /**
      * Formats the pipeline header with ID and status.
-     * For overloaded pipelines, shows how many tests are hidden.
+     * For overloaded pipelines, shows indication.
      */
     private fun formatPipelineHeader(
         pipeline: de.richargh.pipematrix.domain.Pipeline,
-        matrix: de.richargh.pipematrix.domain.TestMatrix,
-        sortedTests: List<de.richargh.pipematrix.domain.TestName>
+        matrix: de.richargh.pipematrix.domain.TestMatrix
     ): String {
         val id = "#${pipeline.id.value}"
         val isOverloaded = matrix.isOverloaded(pipeline.id)
 
         return if (isOverloaded) {
-            val hiddenCount = calculateHiddenTestCount(pipeline.id, matrix, sortedTests)
-            if (hiddenCount > 0) {
-                "$id (+$hiddenCount)"
-            } else {
-                "$id (>20)"
-            }
+            val failureCount = matrix.overloadedPipelineFailures[pipeline.id]?.size ?: 0
+            "$id (+$failureCount)"
         } else {
             id
         }
     }
 
     /**
-     * Calculates how many tests failed in an overloaded pipeline but are not shown in the table.
+     * Formats the pipeline status.
      */
-    private fun calculateHiddenTestCount(
-        pipelineId: de.richargh.pipematrix.domain.PipelineId,
-        matrix: de.richargh.pipematrix.domain.TestMatrix,
-        sortedTests: List<de.richargh.pipematrix.domain.TestName>
-    ): Int {
-        val allFailuresInPipeline = matrix.overloadedPipelineFailures[pipelineId] ?: emptySet()
-        val shownFailuresInPipeline = sortedTests.count { allFailuresInPipeline.contains(it) }
-        return allFailuresInPipeline.size - shownFailuresInPipeline
+    private fun formatStatus(pipeline: de.richargh.pipematrix.domain.Pipeline): String {
+        return when (pipeline.status) {
+            de.richargh.pipematrix.domain.PipelineStatus.SUCCESS -> "success"
+            de.richargh.pipematrix.domain.PipelineStatus.FAILED -> "failed"
+            de.richargh.pipematrix.domain.PipelineStatus.RUNNING -> "running"
+            de.richargh.pipematrix.domain.PipelineStatus.PENDING -> "pending"
+            de.richargh.pipematrix.domain.PipelineStatus.CANCELED -> "canceled"
+            de.richargh.pipematrix.domain.PipelineStatus.SKIPPED -> "skipped"
+        }
     }
 
     /**
@@ -151,43 +200,4 @@ object TableRenderer {
         return pipeline.author?.shortName() ?: "Unknown"
     }
 
-    /**
-     * Gets the status marker for a test in a pipeline.
-     *
-     * @return "✗" if test failed, "" if test passed (even in overloaded pipelines)
-     */
-    private fun getStatusMarker(
-        matrix: de.richargh.pipematrix.domain.TestMatrix,
-        testName: de.richargh.pipematrix.domain.TestName,
-        pipelineId: de.richargh.pipematrix.domain.PipelineId
-    ): String {
-        return when {
-            // Check if test failed in overloaded pipeline
-            matrix.isOverloaded(pipelineId) && matrix.didTestFailInOverloadedPipeline(testName, pipelineId) -> "✗"
-            // Check if test failed in normal pipeline
-            matrix.didTestFail(testName, pipelineId) -> "✗"
-            // Test passed or didn't run
-            else -> ""
-        }
-    }
-
-    /**
-     * Gets the total number of times a test failed across all pipelines.
-     */
-    private fun getFailureCount(matrix: de.richargh.pipematrix.domain.TestMatrix, testName: de.richargh.pipematrix.domain.TestName): Int {
-        val regularFailures = matrix.testFailures[testName]?.size ?: 0
-        val overloadedFailures = matrix.overloadedPipelineFailures.values.count { it.contains(testName) }
-        return regularFailures + overloadedFailures
-    }
-
-    /**
-     * Truncates test name if it exceeds maximum length.
-     */
-    private fun truncateTestName(name: String): String {
-        return if (name.length > MAX_TEST_NAME_LENGTH) {
-            name.take(MAX_TEST_NAME_LENGTH - 3) + "..."
-        } else {
-            name
-        }
-    }
 }

@@ -136,9 +136,12 @@ class TestMatrixRepositorySimpleTest {
         matrix.pipelines[0].status shouldBe PipelineStatus.FAILED
         matrix.pipelines[1].id.value shouldBe 2
 
-        matrix.testFailures.size shouldBe 2
-        matrix.testFailures[TestName("test_login")] shouldBe setOf(PipelineId(1))
-        matrix.testFailures[TestName("test_logout")] shouldBe setOf(PipelineId(1))
+        matrix.classnameGroups.size shouldBe 1
+        val group = matrix.classnameGroups.first()
+        group.classname shouldBe "AuthTests"
+        group.variants.size shouldBe 2
+        group.variants[0].testName shouldBe "test_login"
+        group.variants[1].testName shouldBe "test_logout"
         matrix.overloadedPipelines shouldBe emptySet()
     }
 
@@ -200,8 +203,10 @@ class TestMatrixRepositorySimpleTest {
 
         // Verify
         matrix.overloadedPipelines shouldBe setOf(PipelineId(1))
-        // Overloaded pipelines don't record individual test failures to keep the table manageable
-        matrix.testFailures.size shouldBe 0
+        // Overloaded pipelines don't appear in the main classname groups
+        matrix.classnameGroups.size shouldBe 0
+        // But they do appear in overloadedPipelineFailures
+        matrix.overloadedPipelineFailures[PipelineId(1)]?.size shouldBe 25
     }
 
     @Test
@@ -259,7 +264,7 @@ class TestMatrixRepositorySimpleTest {
 
         // Verify
         matrix.pipelines.size shouldBe 1
-        matrix.testFailures shouldBe emptyMap()
+        matrix.classnameGroups shouldBe emptyList()
         matrix.overloadedPipelines shouldBe emptySet()
     }
 

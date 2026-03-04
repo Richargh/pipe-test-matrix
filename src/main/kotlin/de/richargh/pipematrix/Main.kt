@@ -104,20 +104,32 @@ private fun runApplication(command: de.richargh.pipematrix.cli.TestMatrixCommand
                 pipelineCount = count,
                 onProgress = { current, total ->
                     print("\rAnalyzing pipeline $current/$total...")
-                }
+                },
+                debugTestNames = command.debugTestNames
             )
             println() // Move to next line after progress completes
             println()
 
+            // Parse sort mode
+            val sortMode = when (command.sortMode.lowercase()) {
+                "name" -> de.richargh.pipematrix.domain.SortMode.NAME
+                "count" -> de.richargh.pipematrix.domain.SortMode.COUNT
+                else -> {
+                    System.err.println("Warning: Invalid sort mode '${command.sortMode}'. Using 'count' as default.")
+                    de.richargh.pipematrix.domain.SortMode.COUNT
+                }
+            }
+
             // Render and display table
-            val table = TableRenderer.render(matrix)
+            val table = TableRenderer.render(matrix, sortMode)
             println(table)
 
             // Display summary
             println()
             println("Summary:")
             println("  Pipelines analyzed: ${matrix.pipelines.size}")
-            println("  Unique test failures: ${matrix.testFailures.size}")
+            println("  Test classes with failures: ${matrix.classnameGroups.size}")
+            println("  Total failure variants: ${matrix.classnameGroups.sumOf { it.variants.size }}")
             println("  Overloaded pipelines (>20 failures): ${matrix.overloadedPipelines.size}")
 
         } finally {

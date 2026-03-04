@@ -16,7 +16,11 @@ data class GitLabPipelineResponse(
     val createdAt: String,
     @SerialName("updated_at")
     val updatedAt: String? = null,
-    val user: GitLabUser? = null
+    val user: GitLabUser? = null,
+    val username: String? = null,
+    @SerialName("web_url")
+    val webUrl: String? = null,
+    val source: String? = null
 )
 
 /**
@@ -90,5 +94,7 @@ data class GitLabTestCase(
     @SerialName("system_output")
     val systemOutput: String? = null,
     @SerialName("stack_trace")
-    val stackTrace: String? = null
+    val stackTrace: String? = null,
+    val file: String? = null,
+    val line: Int? = null
 )
