@@ -1,64 +1,68 @@
-# GitLab CI Test Matrix
+= GitLab CI Test Matrix
 
 A Kotlin CLI tool that displays a matrix of test failures across recent GitLab CI pipeline runs. Helps identify flaky tests and patterns of failures.
 
-## Features
+== Features
 
-- Fetches recent pipeline runs for a given GitLab project and branch
-- Retrieves test reports from each pipeline
-- Displays a matrix showing which tests failed in which pipelines
-- Shows failure count before each test name for quick identification
-- Identifies pipelines with >20 failures (marked as "overloaded")
-- For overloaded pipelines, displays count of hidden tests not shown in table
+* Fetches recent pipeline runs for a given GitLab project and branch
+* Retrieves test reports from each pipeline
+* Displays a matrix showing which tests failed in which pipelines
+* Shows failure count before each test name for quick identification
+* Identifies pipelines with >20 failures (marked as "overloaded")
+* For overloaded pipelines, displays count of hidden tests not shown in table
 
-## Requirements
+== Requirements
 
-- Java 21 or higher
-- GitLab instance with API access
-- GitLab Personal Access Token with `read_api` scope
+* Java 21 or higher
+* GitLab instance with API access
+* GitLab Personal Access Token with `read_api` scope
 
-## Installation
+== Installation
 
-### Build from Source
+=== Build from Source
 
-```bash
+[source,bash]
+----
 ./gradlew build
-```
+----
 
 This creates an executable distribution in `build/distributions/`.
 
-### Extract and Run
+=== Extract and Run
 
-```bash
+[source,bash]
+----
 cd build/distributions
 unzip gitlab-ci-test-matrix-1.0.0.zip
 cd gitlab-ci-test-matrix-1.0.0/bin
-```
+----
 
-## Usage
+== Usage
 
-### Using the run script (recommended)
+=== Using the run script (recommended)
 
-```bash
+[source,bash]
+----
 ./run mygroup/myproject --branch main --count 10
-```
+----
 
-### Using Gradle directly
+=== Using Gradle directly
 
-```bash
+[source,bash]
+----
 ./gradlew run --args="mygroup/myproject --branch main --count 10"
-```
+----
 
-### Common options
+=== Common options
 
-- `--branch <name>`: Branch to analyze (default: main)
-- `--count <n>`: Number of pipelines (default: 10)
-- `--headers <mode>`: Header display: `full` or `none` (default: full)
-- `--help`: Show help
+* `--branch <name>`: Branch to analyze (default: main)
+* `--count <n>`: Number of pipelines (default: 10)
+* `--headers <mode>`: Header display: `full` or `none` (default: full)
+* `--help`: Show help
 
-## Output Example
+== Output Example
 
-```
+----
 ┌─────────────────────────────┬────────┬────────┬──────────┐
 │ Test Class / Variant        │ #12345 │ #12344 │ #12343   │
 │                             │ abc123d│ def456a│ 789bcef  │
@@ -73,16 +77,16 @@ cd gitlab-ci-test-matrix-1.0.0/bin
 │   [C] should call endpoint  │        │        │          │
 │       Error: timeout...     │        │        │          │
 └─────────────────────────────┴────────┴────────┴──────────┘
-```
+----
 
-### Matrix Symbols
+=== Matrix Symbols
 
-- `ClassName (N)` - Test class with total failure count across all pipelines
-- `[A] test name` - Failure variant with unique letter identifier
-- `A B` - Variant letters that failed in this pipeline
-- Empty cell - No failures in this pipeline
-- `(+N)` - In overloaded pipeline headers, count of additional hidden failures
+* `ClassName (N)` - Test class with total failure count across all pipelines
+* `[A] test name` - Failure variant with unique letter identifier
+* `A B` - Variant letters that failed in this pipeline
+* Empty cell - No failures in this pipeline
+* `(+N)` - In overloaded pipeline headers, count of additional hidden failures
 
-## License
+== License
 
 This project is licensed under the UNLICENSE and therefore public domain.
