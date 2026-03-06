@@ -7,10 +7,12 @@ import de.richargh.pipematrix.config.Config.Companion.fromEnvironment
 import de.richargh.pipematrix.app.exposed.BranchName
 import de.richargh.pipematrix.app.exposed.FailureThreshold
 import de.richargh.pipematrix.app.exposed.HeaderMode
+import de.richargh.pipematrix.app.exposed.IsoDate
 import de.richargh.pipematrix.app.exposed.ProjectPath
+import de.richargh.pipematrix.app.exposed.SortMode
+import de.richargh.pipematrix.app.exposed.TestClassnameFilter
 import de.richargh.pipematrix.presentation.TableRenderer
 import de.richargh.pipematrix.app.TestMatrixFacade
-import de.richargh.pipematrix.app.exposed.SortMode
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -69,6 +71,21 @@ private fun runApplication(command: TestMatrixCommand) {
         val branch = BranchName(command.branch)
         val count = command.count
 
+        // Parse and validate date range
+        val dateFrom = command.fromDate?.let { IsoDate.parse(it) }
+        val dateTo = command.toDate?.let { IsoDate.parse(it) }
+
+        // Validate date range
+        if (dateFrom != null && dateTo != null) {
+            if (dateFrom.isAfter(dateTo)) {
+                System.err.println("Error: --from date must be before or equal to --to date")
+                exitProcess(1)
+            }
+        }
+
+        // Parse filter
+        val filter = command.filterTestClass?.let { TestClassnameFilter(it) }
+
         // Create HTTP client
         val httpClient = createHttpClient()
 
@@ -98,18 +115,41 @@ private fun runApplication(command: TestMatrixCommand) {
 
             // Fetch test matrix
             println("Fetching test matrix for ${command.projectPath} on branch $branch...")
+            if (filter != null) {
+                println("Filtering for test class: ${filter.value}")
+            }
+            if (dateFrom != null || dateTo != null) {
+                val fromStr = dateFrom?.value?.toString() ?: "earliest"
+                val toStr = dateTo?.value?.toString() ?: "latest"
+                println("Date range: $fromStr to $toStr")
+            }
             println()
 
             val matrix = repository.fetchTestMatrix(
                 projectPath = ProjectPath(command.projectPath),
                 branch = branch,
                 pipelineCount = count,
+                dateFrom = dateFrom,
+                dateTo = dateTo,
+                classnameFilter = filter,
                 onProgress = { current, total ->
                     print("\rAnalyzing pipeline $current/$total...")
                 },
                 debugTestNames = command.debugTestNames
             )
-            println() // Move to next line after progress completes
+
+            // Print summary that overwrites the progress line
+            if (matrix.totalPipelinesAnalyzed > 0 && matrix.analyzedDateRange != null) {
+                val (minDate, maxDate) = matrix.analyzedDateRange
+                val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+                val summary = "Analyzed ${matrix.totalPipelinesAnalyzed} pipelines between ${minDate.atZone(java.time.ZoneId.of("UTC")).format(dateFormatter)} and ${maxDate.atZone(java.time.ZoneId.of("UTC")).format(dateFormatter)} UTC"
+                // Clear the line by overwriting with spaces, then print summary
+                print("\r" + " ".repeat(120) + "\r$summary")
+            } else {
+                // Clear the progress line
+                print("\r" + " ".repeat(120) + "\r")
+            }
+            println() // Move to next line after summary
             println()
 
             // Parse sort mode
@@ -149,6 +189,10 @@ private fun runApplication(command: TestMatrixCommand) {
             httpClient.close()
         }
 
+    } catch (e: IllegalArgumentException) {
+        // Catch validation errors from value types
+        System.err.println("Invalid input: ${e.message}")
+        exitProcess(1)
     } catch (e: GitLabApiException) {
         System.err.println("GitLab API error: ${e.message}")
         exitProcess(1)

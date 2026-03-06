@@ -11,7 +11,9 @@ interface PipelineClient {
     suspend fun fetchPipelines(
         projectPath: ProjectPath,
         branch: BranchName,
-        count: Int = 10
+        maxCount: Int? = null,
+        updatedAfter: IsoDate? = null,
+        updatedBefore: IsoDate? = null
     ): List<GitLabPipelineResponse>
     suspend fun fetchTestReport(projectPath: ProjectPath, pipelineId: PipelineId): GitLabTestReportResponse
 

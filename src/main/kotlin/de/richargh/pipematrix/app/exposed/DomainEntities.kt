@@ -80,12 +80,18 @@ data class ClassnameGroup(
  * @property classnameGroups List of classname groups with their failure variants
  * @property overloadedPipelines Set of pipeline IDs that exceeded the failure threshold
  * @property overloadedPipelineFailures Map of overloaded pipeline IDs to their failure variants
+ * @property totalPipelinesAnalyzed Total number of pipelines analyzed (before any filtering)
+ * @property analyzedDateRange Date range of all analyzed pipelines (min to max), null if no pipelines
  */
 data class TestMatrix(
     val pipelines: List<Pipeline>,
     val classnameGroups: List<ClassnameGroup>,
     val overloadedPipelines: Set<PipelineId>,
-    val overloadedPipelineFailures: Map<PipelineId, List<FailureVariant>> = emptyMap()
+    val overloadedPipelineFailures: Map<PipelineId, List<FailureVariant>> = emptyMap(),
+    val totalPipelinesAnalyzed: Int = pipelines.size,
+    val analyzedDateRange: Pair<Instant, Instant>? = if (pipelines.isNotEmpty()) {
+        pipelines.minOf { it.createdAt } to pipelines.maxOf { it.createdAt }
+    } else null
 ) {
     /**
      * Checks if a pipeline is marked as overloaded (>20 failures).
@@ -110,5 +116,39 @@ data class TestMatrix(
                 group.variants.sumOf { it.pipelineIds.size }
             }
         }
+    }
+
+    /**
+     * Returns a filtered copy of this matrix containing only the specified test class.
+     * Pipelines with no failures for this class are excluded.
+     *
+     * Note: Overloaded pipelines are excluded from filtered results as their failure
+     * details don't include classname information needed for accurate filtering.
+     *
+     * @param filter The filter to match test class names (case-insensitive partial match)
+     * @return A new TestMatrix with filtered classname groups and pipelines
+     */
+    fun filterByClassname(filter: TestClassnameFilter): TestMatrix {
+        // Filter classname groups to only those matching the filter
+        val filteredGroups = classnameGroups.filter { filter.matches(it.classname) }
+
+        // Collect all pipeline IDs that have failures in the filtered groups
+        val relevantPipelineIds = filteredGroups
+            .flatMap { group -> group.variants.flatMap { it.pipelineIds } }
+            .toSet()
+
+        // Filter pipelines to only those with relevant failures
+        val filteredPipelines = pipelines.filter { it.id in relevantPipelineIds }
+
+        // Note: Overloaded pipelines are excluded as FailureVariant for overloaded
+        // pipelines don't include classname information, making accurate filtering impossible
+        return TestMatrix(
+            pipelines = filteredPipelines,
+            classnameGroups = filteredGroups,
+            overloadedPipelines = emptySet(),
+            overloadedPipelineFailures = emptyMap(),
+            totalPipelinesAnalyzed = this.totalPipelinesAnalyzed,
+            analyzedDateRange = this.analyzedDateRange
+        )
     }
 }

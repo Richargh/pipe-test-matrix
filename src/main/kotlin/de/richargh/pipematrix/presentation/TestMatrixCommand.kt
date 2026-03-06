@@ -57,9 +57,8 @@ class TestMatrixCommand : Runnable {
     @CommandLine.Option(
         names = ["-c", "--count"],
         description = ["Number of recent pipelines to analyze (default: 10)"],
-        defaultValue = "10"
     )
-    var count: Int = 10
+    var count: Int? = null
 
     /**
      * Debug mode - prints raw test case data to help identify available fields.
@@ -89,6 +88,33 @@ class TestMatrixCommand : Runnable {
         defaultValue = "full"
     )
     var headerMode: String = "full"
+
+    /**
+     * Filter to show only specific test class.
+     */
+    @CommandLine.Option(
+        names = ["--filter-test-class"],
+        description = ["Filter to show only specific test class (case-insensitive partial match)"]
+    )
+    var filterTestClass: String? = null
+
+    /**
+     * Start date for pipeline range (ISO-8601 format: YYYY-MM-DD).
+     */
+    @CommandLine.Option(
+        names = ["--from"],
+        description = ["Start date for pipeline range (ISO-8601 format: YYYY-MM-DD)"]
+    )
+    var fromDate: String? = null
+
+    /**
+     * End date for pipeline range (ISO-8601 format: YYYY-MM-DD).
+     */
+    @CommandLine.Option(
+        names = ["--to"],
+        description = ["End date for pipeline range (ISO-8601 format: YYYY-MM-DD)"]
+    )
+    var toDate: String? = null
 
     override fun run() {
         // The actual execution logic will be in main()

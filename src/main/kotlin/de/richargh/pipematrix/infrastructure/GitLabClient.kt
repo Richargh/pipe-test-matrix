@@ -3,6 +3,7 @@ package de.richargh.pipematrix.infrastructure
 import com.gitlab.api.GitLabPipelineResponse
 import com.gitlab.api.GitLabTestReportResponse
 import de.richargh.pipematrix.app.exposed.BranchName
+import de.richargh.pipematrix.app.exposed.IsoDate
 import de.richargh.pipematrix.app.exposed.PipelineClient
 import de.richargh.pipematrix.app.exposed.PipelineId
 import de.richargh.pipematrix.app.exposed.ProjectPath
@@ -78,7 +79,9 @@ class GitLabClient(
     override suspend fun fetchPipelines(
         projectPath: ProjectPath,
         branch: BranchName,
-        count: Int
+        maxCount: Int?,
+        updatedAfter: IsoDate?,
+        updatedBefore: IsoDate?
     ): List<GitLabPipelineResponse> {
         val encodedPath = encodeProjectPath(projectPath.value)
         val url = "$baseUrl/api/v4/projects/$encodedPath/pipelines"
@@ -87,7 +90,18 @@ class GitLabClient(
             val response = httpClient.get(url) {
                 header("PRIVATE-TOKEN", token)
                 parameter("ref", branch.value)
-                parameter("per_page", count)
+
+                var maxPipelines = maxCount ?: 100
+                if (updatedAfter != null || updatedBefore != null) {
+                    updatedAfter?.let { parameter("updated_after", it.toGitLabApiFormatStartOfDay()) }
+                    updatedBefore?.let { parameter("updated_before", it.toGitLabApiFormatEndOfDay()) }
+                } else {
+                    // if no date range is set, we have to constrain how many pipes we fetch
+                    maxPipelines = 10
+                }
+                if(maxPipelines != null) {
+                    parameter("per_page", maxCount)
+                }
             }
 
             // Check for error status codes

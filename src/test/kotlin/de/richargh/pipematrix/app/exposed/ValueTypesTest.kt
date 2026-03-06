@@ -3,6 +3,7 @@ package de.richargh.pipematrix.app.exposed
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 
 class ProjectPathTest {
     @Test
@@ -144,5 +145,162 @@ class HeaderModeTest {
     @Test
     fun `should have exactly two modes`() {
         HeaderMode.entries.size shouldBe 2
+    }
+}
+
+class IsoDateTest {
+    @Test
+    fun `should parse valid ISO date`() {
+        val date = IsoDate.parse("2024-01-15")
+        date.value shouldBe LocalDate.of(2024, 1, 15)
+    }
+
+    @Test
+    fun `should parse valid ISO date at year boundaries`() {
+        val date = IsoDate.parse("2024-12-31")
+        date.value shouldBe LocalDate.of(2024, 12, 31)
+    }
+
+    @Test
+    fun `should reject empty date string`() {
+        shouldThrow<IllegalArgumentException> {
+            IsoDate.parse("")
+        }
+    }
+
+    @Test
+    fun `should reject blank date string`() {
+        shouldThrow<IllegalArgumentException> {
+            IsoDate.parse("   ")
+        }
+    }
+
+    @Test
+    fun `should reject invalid date format`() {
+        shouldThrow<IllegalArgumentException> {
+            IsoDate.parse("2024/01/15")
+        }
+    }
+
+    @Test
+    fun `should reject invalid date format with text`() {
+        shouldThrow<IllegalArgumentException> {
+            IsoDate.parse("January 15, 2024")
+        }
+    }
+
+    @Test
+    fun `should reject invalid date values`() {
+        shouldThrow<IllegalArgumentException> {
+            IsoDate.parse("2024-13-01")  // Invalid month
+        }
+    }
+
+    @Test
+    fun `should convert to GitLab API format for start of day`() {
+        val date = IsoDate.parse("2024-01-15")
+        val apiFormat = date.toGitLabApiFormatStartOfDay()
+        apiFormat shouldBe "2024-01-15T00:00:00Z"
+    }
+
+    @Test
+    fun `should convert to GitLab API format for end of day`() {
+        val date = IsoDate.parse("2024-01-15")
+        val apiFormat = date.toGitLabApiFormatEndOfDay()
+        apiFormat shouldBe "2024-01-15T23:59:59Z"
+    }
+
+    @Test
+    fun `should compare dates correctly with isBefore`() {
+        val earlier = IsoDate.parse("2024-01-15")
+        val later = IsoDate.parse("2024-01-20")
+        earlier.isBefore(later) shouldBe true
+        later.isBefore(earlier) shouldBe false
+    }
+
+    @Test
+    fun `should compare dates correctly with isAfter`() {
+        val earlier = IsoDate.parse("2024-01-15")
+        val later = IsoDate.parse("2024-01-20")
+        later.isAfter(earlier) shouldBe true
+        earlier.isAfter(later) shouldBe false
+    }
+
+    @Test
+    fun `should return false for isBefore when dates are equal`() {
+        val date1 = IsoDate.parse("2024-01-15")
+        val date2 = IsoDate.parse("2024-01-15")
+        date1.isBefore(date2) shouldBe false
+    }
+
+    @Test
+    fun `should return false for isAfter when dates are equal`() {
+        val date1 = IsoDate.parse("2024-01-15")
+        val date2 = IsoDate.parse("2024-01-15")
+        date1.isAfter(date2) shouldBe false
+    }
+}
+
+class TestClassnameFilterTest {
+    @Test
+    fun `should create valid filter`() {
+        val filter = TestClassnameFilter("MyTestClass")
+        filter.value shouldBe "MyTestClass"
+    }
+
+    @Test
+    fun `should reject empty filter`() {
+        shouldThrow<IllegalArgumentException> {
+            TestClassnameFilter("")
+        }
+    }
+
+    @Test
+    fun `should reject blank filter`() {
+        shouldThrow<IllegalArgumentException> {
+            TestClassnameFilter("   ")
+        }
+    }
+
+    @Test
+    fun `should match exact classname`() {
+        val filter = TestClassnameFilter("AbrechnungsstatusEmpfaengerAnzeigeTest")
+        filter.matches("AbrechnungsstatusEmpfaengerAnzeigeTest") shouldBe true
+    }
+
+    @Test
+    fun `should match partial classname case-insensitive`() {
+        val filter = TestClassnameFilter("Empfaenger")
+        filter.matches("AbrechnungsstatusEmpfaengerAnzeigeTest") shouldBe true
+    }
+
+    @Test
+    fun `should match with different case`() {
+        val filter = TestClassnameFilter("empfaenger")
+        filter.matches("AbrechnungsstatusEmpfaengerAnzeigeTest") shouldBe true
+    }
+
+    @Test
+    fun `should match with filter in different case`() {
+        val filter = TestClassnameFilter("EMPFAENGER")
+        filter.matches("AbrechnungsstatusEmpfaengerAnzeigeTest") shouldBe true
+    }
+
+    @Test
+    fun `should not match unrelated classname`() {
+        val filter = TestClassnameFilter("SomethingElse")
+        filter.matches("AbrechnungsstatusEmpfaengerAnzeigeTest") shouldBe false
+    }
+
+    @Test
+    fun `should match beginning of classname`() {
+        val filter = TestClassnameFilter("Abrechnungs")
+        filter.matches("AbrechnungsstatusEmpfaengerAnzeigeTest") shouldBe true
+    }
+
+    @Test
+    fun `should match end of classname`() {
+        val filter = TestClassnameFilter("AnzeigeTest")
+        filter.matches("AbrechnungsstatusEmpfaengerAnzeigeTest") shouldBe true
     }
 }

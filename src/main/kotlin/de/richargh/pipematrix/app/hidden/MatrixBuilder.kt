@@ -53,7 +53,11 @@ object MatrixBuilder {
             pipelines = pipelines,
             classnameGroups = classnameGroups,
             overloadedPipelines = overloadedPipelines,
-            overloadedPipelineFailures = overloadedPipelineFailuresMap
+            overloadedPipelineFailures = overloadedPipelineFailuresMap,
+            totalPipelinesAnalyzed = pipelines.size,
+            analyzedDateRange = if (pipelines.isNotEmpty()) {
+                pipelines.minOf { it.createdAt } to pipelines.maxOf { it.createdAt }
+            } else null
         )
     }
 

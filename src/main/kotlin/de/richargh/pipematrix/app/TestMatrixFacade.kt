@@ -7,10 +7,12 @@ import de.richargh.pipematrix.app.exposed.AuthorName
 import de.richargh.pipematrix.app.exposed.BranchName
 import de.richargh.pipematrix.app.exposed.CommitSha
 import de.richargh.pipematrix.app.exposed.FailureThreshold
+import de.richargh.pipematrix.app.exposed.IsoDate
 import de.richargh.pipematrix.app.exposed.Pipeline
 import de.richargh.pipematrix.app.exposed.PipelineId
 import de.richargh.pipematrix.app.exposed.PipelineStatus
 import de.richargh.pipematrix.app.exposed.ProjectPath
+import de.richargh.pipematrix.app.exposed.TestClassnameFilter
 import de.richargh.pipematrix.app.exposed.TestFailure
 import de.richargh.pipematrix.app.exposed.TestMatrix
 import de.richargh.pipematrix.app.hidden.MatrixBuilder
@@ -26,12 +28,21 @@ class TestMatrixFacade(
     suspend fun fetchTestMatrix(
         projectPath: ProjectPath,
         branch: BranchName,
-        pipelineCount: Int = 10,
+        pipelineCount: Int? = null,
+        dateFrom: IsoDate? = null,
+        dateTo: IsoDate? = null,
+        classnameFilter: TestClassnameFilter? = null,
         onProgress: ((current: Int, total: Int) -> Unit)? = null,
         debugTestNames: Boolean = false
     ): TestMatrix {
-        // Fetch pipelines
-        val pipelineResponses = pipelineClient.fetchPipelines(projectPath, branch, pipelineCount)
+        // Fetch pipelines (with optional date range)
+        val pipelineResponses = pipelineClient.fetchPipelines(
+            projectPath = projectPath,
+            branch = branch,
+            maxCount = pipelineCount,
+            updatedAfter = dateFrom,
+            updatedBefore = dateTo
+        )
 
         // Debug pipeline user data if requested
         if (debugTestNames && pipelineResponses.isNotEmpty()) {
@@ -73,12 +84,19 @@ class TestMatrixFacade(
                 .toMap()
         }
 
-        // Build and return test matrix
-        return MatrixBuilder.build(
+        // Build test matrix
+        val matrix = MatrixBuilder.build(
             pipelines = pipelines,
             failuresByPipeline = failuresByPipeline,
             threshold = failureThreshold
         )
+
+        // Apply classname filter if provided
+        return if (classnameFilter != null) {
+            matrix.filterByClassname(classnameFilter)
+        } else {
+            matrix
+        }
     }
 
     private fun extractFailures(

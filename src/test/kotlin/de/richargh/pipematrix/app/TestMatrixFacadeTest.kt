@@ -8,6 +8,7 @@ import com.gitlab.api.GitLabTestSuite
 import com.gitlab.api.GitLabUser
 import de.richargh.pipematrix.app.exposed.BranchName
 import de.richargh.pipematrix.app.exposed.FailureThreshold
+import de.richargh.pipematrix.app.exposed.IsoDate
 import de.richargh.pipematrix.app.exposed.PipelineClient
 import de.richargh.pipematrix.app.exposed.PipelineId
 import de.richargh.pipematrix.app.exposed.PipelineStatus
@@ -35,7 +36,9 @@ class FakeGitLabClient(
     override suspend fun fetchPipelines(
         projectPath: ProjectPath,
         branch: BranchName,
-        count: Int
+        maxCount: Int?,
+        updatedAfter: IsoDate?,
+        updatedBefore: IsoDate?
     ): List<GitLabPipelineResponse> {
         if (exceptionToThrow != null) {
             throw exceptionToThrow
