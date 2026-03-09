@@ -1,0 +1,44 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "mode": "full",
+  "baseBranchPatterns": [
+    "trunk"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "before 6am every weekday"
+  ],
+  "prConcurrentLimit": 7,
+  "labels": [
+    "dependencies"
+  ],
+  "dependencyDashboard": true,
+  "rangeStrategy": "pin",
+  "automerge": false,
+  "minimumReleaseAge": "3 days",
+  "vulnerabilityAlerts": {
+    "labels": [
+      "security",
+      "dependencies"
+    ],
+    "automerge": true
+  },
+  "commitMessagePrefix": "^ E(deps)",
+  "packageRules": [
+    {
+      "groupName": "JDK",
+      "matchDatasources": ["java-version"],
+      "groupSlug": "jdk"
+    },
+    {
+      "groupName": "Ktor",
+      "groupSlug": "ktor",
+      "matchPackageNames": [
+        "/^io\\.ktor:/"
+      ]
+    }
+  ]
+}
