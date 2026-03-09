@@ -50,7 +50,7 @@ class TestMatrixCommandTest {
         command.gitlabUrl shouldBe "https://gitlab.com"
         command.gitlabToken shouldBe "glpat-xxx"
         command.branch shouldBe "main"  // Default value
-        command.count shouldBe 10   // Default value
+        command.count shouldBe null   // Count is nullable when not specified
     }
 
     @Test

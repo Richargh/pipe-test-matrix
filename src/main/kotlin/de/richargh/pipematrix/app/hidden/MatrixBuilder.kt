@@ -70,11 +70,11 @@ object MatrixBuilder {
 
         // Build classname groups
         return failuresByClassname.map { (classname, classnameFailures) ->
-            // Create unique variants based on (testName, systemOutput, stackTrace)
+            // Create unique variants based on (testName, jobName, systemOutput, stackTrace)
             val variantMap = mutableMapOf<VariantKey, MutableSet<PipelineId>>()
 
             for (failure in classnameFailures) {
-                val key = VariantKey(failure.testName, failure.systemOutput, failure.stackTrace)
+                val key = VariantKey(failure.testName, failure.jobName, failure.systemOutput, failure.stackTrace)
                 variantMap.getOrPut(key) { mutableSetOf() }.add(failure.pipelineId)
             }
 
@@ -86,6 +86,7 @@ object MatrixBuilder {
                 FailureVariant(
                     letter = ('A' + index).toString(),
                     testName = key.testName,
+                    jobName = key.jobName,
                     systemOutput = key.systemOutput,
                     stackTrace = key.stackTrace,
                     pipelineIds = pipelineIds
@@ -112,7 +113,7 @@ object MatrixBuilder {
             val variantMap = mutableMapOf<VariantKey, MutableSet<PipelineId>>()
 
             for (failure in pipelineFailures) {
-                val key = VariantKey(failure.testName, failure.systemOutput, failure.stackTrace)
+                val key = VariantKey(failure.testName, failure.jobName, failure.systemOutput, failure.stackTrace)
                 variantMap.getOrPut(key) { mutableSetOf() }.add(failure.pipelineId)
             }
 
@@ -122,6 +123,7 @@ object MatrixBuilder {
                 FailureVariant(
                     letter = ('A' + index).toString(),
                     testName = key.testName,
+                    jobName = key.jobName,
                     systemOutput = key.systemOutput,
                     stackTrace = key.stackTrace,
                     pipelineIds = pipelineIds
@@ -139,6 +141,7 @@ object MatrixBuilder {
      */
     private data class VariantKey(
         val testName: String,
+        val jobName: String,
         val systemOutput: String?,
         val stackTrace: String?
     )

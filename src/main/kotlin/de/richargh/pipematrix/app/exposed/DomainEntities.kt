@@ -41,6 +41,7 @@ data class Pipeline(
 data class TestFailure(
     val classname: String,
     val testName: String,
+    val jobName: String,
     val pipelineId: PipelineId,
     val systemOutput: String?,
     val stackTrace: String?
@@ -53,6 +54,7 @@ data class TestFailure(
 data class FailureVariant(
     val letter: String,
     val testName: String,
+    val jobName: String,
     val systemOutput: String?,
     val stackTrace: String?,
     val pipelineIds: Set<PipelineId>

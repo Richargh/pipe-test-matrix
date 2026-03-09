@@ -129,6 +129,7 @@ class TestMatrixFacade(
                         TestFailure(
                             classname = testCase.classname,
                             testName = testCase.name,
+                            jobName = testSuite.name,
                             pipelineId = pipelineId,
                             systemOutput = testCase.systemOutput,
                             stackTrace = testCase.stackTrace

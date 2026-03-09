@@ -138,15 +138,16 @@ object TableRenderer {
         // Add each variant
         for (variant in group.variants) {
             lines.add("  [${variant.letter}] ${variant.testName}")
+            lines.add("      (${variant.jobName})")
 
             // Add system output if present (truncated)
-            if (variant.systemOutput != null && variant.systemOutput.isNotBlank()) {
+            if (!variant.systemOutput.isNullOrBlank()) {
                 val truncatedOutput = truncateOutput(variant.systemOutput)
                 lines.add("      $truncatedOutput")
             }
 
             // Add stack trace (error) if present (truncated)
-            if (variant.stackTrace != null && variant.stackTrace.isNotBlank()) {
+            if (!variant.stackTrace.isNullOrBlank()) {
                 val truncatedTrace = truncateOutput(variant.stackTrace)
                 lines.add("      Error: $truncatedTrace")
             }

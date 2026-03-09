@@ -45,13 +45,13 @@ class TestMatrixFilterTest {
                 ClassnameGroup(
                     classname = testClassA,
                     variants = listOf(
-                        FailureVariant("A", "test1", null, null, setOf(PipelineId(1), PipelineId(2)))
+                        FailureVariant("A", "test1", "test-job", null, null, setOf(PipelineId(1), PipelineId(2)))
                     )
                 ),
                 ClassnameGroup(
                     classname = testClassB,
                     variants = listOf(
-                        FailureVariant("A", "test2", null, null, setOf(PipelineId(3)))
+                        FailureVariant("A", "test2", "test-job", null, null, setOf(PipelineId(3)))
                     )
                 )
             ),
@@ -73,13 +73,13 @@ class TestMatrixFilterTest {
                 ClassnameGroup(
                     classname = testClassA,
                     variants = listOf(
-                        FailureVariant("A", "test1", null, null, setOf(PipelineId(1), PipelineId(2)))
+                        FailureVariant("A", "test1", "test-job", null, null, setOf(PipelineId(1), PipelineId(2)))
                     )
                 ),
                 ClassnameGroup(
                     classname = testClassB,
                     variants = listOf(
-                        FailureVariant("A", "test2", null, null, setOf(PipelineId(3)))
+                        FailureVariant("A", "test2", "test-job", null, null, setOf(PipelineId(3)))
                     )
                 )
             ),
@@ -101,19 +101,19 @@ class TestMatrixFilterTest {
                 ClassnameGroup(
                     classname = testClassA,
                     variants = listOf(
-                        FailureVariant("A", "test1", null, null, setOf(PipelineId(1)))
+                        FailureVariant("A", "test1", "test-job", null, null, setOf(PipelineId(1)))
                     )
                 ),
                 ClassnameGroup(
                     classname = testClassB,
                     variants = listOf(
-                        FailureVariant("A", "test2", null, null, setOf(PipelineId(2)))
+                        FailureVariant("A", "test2", "test-job", null, null, setOf(PipelineId(2)))
                     )
                 ),
                 ClassnameGroup(
                     classname = testClassC,
                     variants = listOf(
-                        FailureVariant("A", "test3", null, null, setOf(PipelineId(3)))
+                        FailureVariant("A", "test3", "test-job", null, null, setOf(PipelineId(3)))
                     )
                 )
             ),
@@ -137,7 +137,7 @@ class TestMatrixFilterTest {
                 ClassnameGroup(
                     classname = testClassB,
                     variants = listOf(
-                        FailureVariant("A", "test1", null, null, setOf(PipelineId(1)))
+                        FailureVariant("A", "test1", "test-job", null, null, setOf(PipelineId(1)))
                     )
                 )
             ),
@@ -159,7 +159,7 @@ class TestMatrixFilterTest {
                 ClassnameGroup(
                     classname = testClassA,
                     variants = listOf(
-                        FailureVariant("A", "test1", null, null, setOf(PipelineId(1)))
+                        FailureVariant("A", "test1", "test-job", null, null, setOf(PipelineId(1)))
                     )
                 )
             ),
@@ -182,17 +182,17 @@ class TestMatrixFilterTest {
                 ClassnameGroup(
                     classname = testClassA,
                     variants = listOf(
-                        FailureVariant("A", "test1", null, null, setOf(PipelineId(1)))
+                        FailureVariant("A", "test1", "test-job", null, null, setOf(PipelineId(1)))
                     )
                 )
             ),
             overloadedPipelines = setOf(overloadedPipelineId, PipelineId(3)),
             overloadedPipelineFailures = mapOf(
                 overloadedPipelineId to listOf(
-                    FailureVariant("A", "test1", null, null, setOf(overloadedPipelineId))
+                    FailureVariant("A", "test1", "test-job", null, null, setOf(overloadedPipelineId))
                 ),
                 PipelineId(3) to listOf(
-                    FailureVariant("A", "otherTest", null, null, setOf(PipelineId(3)))
+                    FailureVariant("A", "otherTest", "test-job", null, null, setOf(PipelineId(3)))
                 )
             )
         )
@@ -217,9 +217,9 @@ class TestMatrixFilterTest {
                 ClassnameGroup(
                     classname = testClassA,
                     variants = listOf(
-                        FailureVariant("A", "test1", null, null, setOf(PipelineId(1))),
-                        FailureVariant("B", "test2", null, null, setOf(PipelineId(2))),
-                        FailureVariant("C", "test3", null, null, setOf(PipelineId(3)))
+                        FailureVariant("A", "test1", "test-job", null, null, setOf(PipelineId(1))),
+                        FailureVariant("B", "test2", "test-job", null, null, setOf(PipelineId(2))),
+                        FailureVariant("C", "test3", "test-job", null, null, setOf(PipelineId(3)))
                     )
                 )
             ),
@@ -239,8 +239,8 @@ class TestMatrixFilterTest {
 
     @Test
     fun `should preserve failure variants in filtered classname groups`() {
-        val variant1 = FailureVariant("A", "test1", "output1", "trace1", setOf(PipelineId(1)))
-        val variant2 = FailureVariant("B", "test2", "output2", "trace2", setOf(PipelineId(2)))
+        val variant1 = FailureVariant("A", "test1", "test-job", "output1", "trace1", setOf(PipelineId(1)))
+        val variant2 = FailureVariant("B", "test2", "test-job", "output2", "trace2", setOf(PipelineId(2)))
 
         val matrix = TestMatrix(
             pipelines = listOf(pipeline1, pipeline2),

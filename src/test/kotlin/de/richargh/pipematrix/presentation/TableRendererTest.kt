@@ -32,6 +32,7 @@ class TableRendererTest {
                 FailureVariant(
                     letter = "A",
                     testName = "testMethod",
+                    jobName = "test-job",
                     systemOutput = null,
                     stackTrace = null,
                     pipelineIds = setOf(PipelineId(12345))
