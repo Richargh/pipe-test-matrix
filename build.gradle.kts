@@ -22,7 +22,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
 
     // CLI
-    implementation("info.picocli:picocli:4.7.5")
+    implementation("info.picocli:picocli:4.7.7")
 
     // Table rendering
     implementation("com.jakewharton.picnic:picnic:0.7.0")
